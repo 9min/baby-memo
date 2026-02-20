@@ -19,6 +19,11 @@ interface ActivityState {
     metadata: ActivityMetadata
     memo?: string
   }) => Promise<void>
+  updateActivity: (params: {
+    activityId: string
+    recordedAt: string
+    metadata: ActivityMetadata
+  }) => Promise<void>
   deleteActivity: (activityId: string) => Promise<void>
   subscribe: (familyId: string) => void
   unsubscribe: () => void
@@ -67,13 +72,33 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
     if (error) throw new Error('활동 기록에 실패했습니다.')
   },
 
+  updateActivity: async ({ activityId, recordedAt, metadata }) => {
+    const { error } = await supabase
+      .from('activities')
+      .update({
+        recorded_at: recordedAt,
+        metadata,
+      })
+      .eq('id', activityId)
+
+    if (error) throw new Error('활동 수정에 실패했습니다.')
+  },
+
   deleteActivity: async (activityId: string) => {
+    const prev = get().activities
+    set((state) => ({
+      activities: state.activities.filter((a) => a.id !== activityId),
+    }))
+
     const { error } = await supabase
       .from('activities')
       .delete()
       .eq('id', activityId)
 
-    if (error) throw new Error('활동 삭제에 실패했습니다.')
+    if (error) {
+      set({ activities: prev })
+      throw new Error('활동 삭제에 실패했습니다.')
+    }
   },
 
   subscribe: (familyId: string) => {
@@ -107,6 +132,23 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
               ),
             }))
           }
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'activities',
+          filter: `family_id=eq.${familyId}`,
+        },
+        (payload) => {
+          const updated = payload.new as Activity
+          set((state) => ({
+            activities: state.activities
+              .map((a) => (a.id === updated.id ? updated : a))
+              .sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime()),
+          }))
         },
       )
       .on(

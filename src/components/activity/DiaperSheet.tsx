@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Droplets } from 'lucide-react'
 import {
   Sheet,
@@ -12,30 +12,40 @@ import { Label } from '@/components/ui/label'
 import TimePicker, { roundToNearest5 } from '@/components/activity/TimePicker'
 import { DIAPER_TYPE_LABELS, DIAPER_AMOUNT_LABELS } from '@/lib/activityConfig'
 import { cn } from '@/lib/utils'
+import { useFamilyStore } from '@/stores/familyStore'
+import { useDefaultsStore } from '@/stores/defaultsStore'
 import type { DiaperType, DiaperAmount, DiaperMetadata } from '@/types/database'
 
 interface DiaperSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (metadata: DiaperMetadata, recordedAt: Date) => void
+  initialData?: { metadata: DiaperMetadata; recordedAt: Date }
 }
 
 const DIAPER_TYPES: DiaperType[] = ['pee', 'poo']
 const DIAPER_AMOUNTS: DiaperAmount[] = ['little', 'normal', 'much']
 
-const DiaperSheet = ({ open, onOpenChange, onSubmit }: DiaperSheetProps) => {
+const DiaperSheet = ({ open, onOpenChange, onSubmit, initialData }: DiaperSheetProps) => {
+  const familyCode = useFamilyStore((s) => s.familyCode)
+  const diaperDefaults = useDefaultsStore((s) => s.getDefaults(familyCode ?? '').diaper)
   const [diaperType, setDiaperType] = useState<DiaperType | null>(null)
   const [amount, setAmount] = useState<DiaperAmount | null>(null)
   const [time, setTime] = useState(() => roundToNearest5(new Date()))
 
-  const handleOpenChange = (next: boolean) => {
-    if (next) {
-      setDiaperType(null)
-      setAmount(null)
-      setTime(roundToNearest5(new Date()))
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setDiaperType(initialData.metadata.diaper_type)
+        setAmount(initialData.metadata.amount)
+        setTime(initialData.recordedAt)
+      } else {
+        setDiaperType(diaperDefaults.diaper_type)
+        setAmount(diaperDefaults.amount)
+        setTime(roundToNearest5(new Date()))
+      }
     }
-    onOpenChange(next)
-  }
+  }, [open, initialData, diaperDefaults])
 
   const handleSubmit = () => {
     if (!diaperType || !amount) return
@@ -43,11 +53,11 @@ const DiaperSheet = ({ open, onOpenChange, onSubmit }: DiaperSheetProps) => {
       { diaper_type: diaperType, amount },
       time,
     )
-    handleOpenChange(false)
+    onOpenChange(false)
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-2xl">
         <SheetHeader>
           <div className="flex items-center gap-2">
@@ -55,7 +65,7 @@ const DiaperSheet = ({ open, onOpenChange, onSubmit }: DiaperSheetProps) => {
               <Droplets className="h-5 w-5 text-emerald-700" strokeWidth={2} />
             </div>
             <div>
-              <SheetTitle>기저귀 기록</SheetTitle>
+              <SheetTitle>{initialData ? '기저귀 수정' : '기저귀 기록'}</SheetTitle>
               <SheetDescription>어떤 기저귀를 갈았나요?</SheetDescription>
             </div>
           </div>
@@ -110,7 +120,7 @@ const DiaperSheet = ({ open, onOpenChange, onSubmit }: DiaperSheetProps) => {
             disabled={!diaperType || !amount}
             onClick={handleSubmit}
           >
-            기록하기
+            {initialData ? '수정하기' : '기록하기'}
           </Button>
         </div>
       </SheetContent>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 interface TimePickerProps {
   value: Date
   onChange: (date: Date) => void
+  label?: string
 }
 
 export const roundToNearest5 = (date: Date): Date => {
@@ -22,7 +23,7 @@ export const roundToNearest5 = (date: Date): Date => {
   return rounded
 }
 
-const TimePicker = ({ value, onChange }: TimePickerProps) => {
+const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
   const adjust = (minutes: number) => {
     const next = new Date(value.getTime() + minutes * 60000)
     if (next <= new Date()) {
@@ -34,7 +35,7 @@ const TimePicker = ({ value, onChange }: TimePickerProps) => {
 
   return (
     <div className="flex flex-col items-center gap-1.5 rounded-xl bg-muted/50 py-3">
-      <span className="text-xs font-medium text-muted-foreground">시간</span>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <div className="flex items-center justify-center gap-3">
         <Button
           type="button"

@@ -1,6 +1,7 @@
 export interface Family {
   id: string
   code: string
+  password: string
   created_at: string
   updated_at: string
 }
@@ -14,14 +15,13 @@ export interface Device {
   updated_at: string
 }
 
-export type ActivityType = 'solid_food' | 'drink' | 'supplement' | 'diaper'
-export type DrinkType = 'milk' | 'water'
+export type ActivityType = 'solid_food' | 'drink' | 'supplement' | 'diaper' | 'sleep'
+export type DrinkType = 'formula' | 'milk' | 'water'
 export type DiaperType = 'pee' | 'poo'
 export type DiaperAmount = 'little' | 'normal' | 'much'
 
 export interface SolidFoodMetadata {
   food_name: string
-  amount: string
 }
 
 export interface DrinkMetadata {
@@ -38,7 +38,12 @@ export interface SupplementMetadata {
   supplement_names: string[]
 }
 
-export type ActivityMetadata = SolidFoodMetadata | DrinkMetadata | DiaperMetadata | SupplementMetadata
+export interface SleepMetadata {
+  note: string
+  end_time: string | null
+}
+
+export type ActivityMetadata = SolidFoodMetadata | DrinkMetadata | DiaperMetadata | SupplementMetadata | SleepMetadata
 
 export interface Activity {
   id: string

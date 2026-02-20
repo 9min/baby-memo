@@ -14,18 +14,22 @@ import TimePicker, { roundToNearest5 } from '@/components/activity/TimePicker'
 import { useSupplementStore } from '@/stores/supplementStore'
 import { useFamilyStore } from '@/stores/familyStore'
 import { cn } from '@/lib/utils'
+import { useDefaultsStore } from '@/stores/defaultsStore'
 import type { SupplementMetadata } from '@/types/database'
 
 interface SupplementSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (metadata: SupplementMetadata, recordedAt: Date) => void
+  initialData?: { metadata: SupplementMetadata; recordedAt: Date }
 }
 
-const SupplementSheet = ({ open, onOpenChange, onSubmit }: SupplementSheetProps) => {
+const SupplementSheet = ({ open, onOpenChange, onSubmit, initialData }: SupplementSheetProps) => {
   const familyId = useFamilyStore((s) => s.familyId)
+  const familyCode = useFamilyStore((s) => s.familyCode)
   const presets = useSupplementStore((s) => s.presets)
   const fetchPresets = useSupplementStore((s) => s.fetchPresets)
+  const supplementDefaults = useDefaultsStore((s) => s.getDefaults(familyCode ?? '').supplement)
 
   const [selected, setSelected] = useState<string[]>([])
   const [time, setTime] = useState(() => roundToNearest5(new Date()))
@@ -36,13 +40,17 @@ const SupplementSheet = ({ open, onOpenChange, onSubmit }: SupplementSheetProps)
     }
   }, [open, familyId, fetchPresets])
 
-  const handleOpenChange = (next: boolean) => {
-    if (next) {
-      setSelected([])
-      setTime(roundToNearest5(new Date()))
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setSelected(initialData.metadata.supplement_names)
+        setTime(initialData.recordedAt)
+      } else {
+        setSelected(supplementDefaults.supplement_names)
+        setTime(roundToNearest5(new Date()))
+      }
     }
-    onOpenChange(next)
-  }
+  }, [open, initialData, supplementDefaults])
 
   const togglePreset = (name: string) => {
     setSelected((prev) =>
@@ -55,11 +63,11 @@ const SupplementSheet = ({ open, onOpenChange, onSubmit }: SupplementSheetProps)
   const handleSubmit = () => {
     if (selected.length === 0) return
     onSubmit({ supplement_names: selected }, time)
-    handleOpenChange(false)
+    onOpenChange(false)
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-2xl">
         <SheetHeader>
           <div className="flex items-center gap-2">
@@ -67,7 +75,7 @@ const SupplementSheet = ({ open, onOpenChange, onSubmit }: SupplementSheetProps)
               <Pill className="h-5 w-5 text-violet-700" strokeWidth={2} />
             </div>
             <div>
-              <SheetTitle>영양제 기록</SheetTitle>
+              <SheetTitle>{initialData ? '영양제 수정' : '영양제 기록'}</SheetTitle>
               <SheetDescription>어떤 영양제를 먹었나요?</SheetDescription>
             </div>
           </div>
@@ -116,7 +124,7 @@ const SupplementSheet = ({ open, onOpenChange, onSubmit }: SupplementSheetProps)
             disabled={selected.length === 0}
             onClick={handleSubmit}
           >
-            기록하기
+            {initialData ? '수정하기' : '기록하기'}
           </Button>
         </div>
       </SheetContent>

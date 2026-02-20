@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { UtensilsCrossed } from 'lucide-react'
 import {
   Sheet,
@@ -11,39 +11,43 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import TimePicker, { roundToNearest5 } from '@/components/activity/TimePicker'
+import { useFamilyStore } from '@/stores/familyStore'
+import { useDefaultsStore } from '@/stores/defaultsStore'
 import type { SolidFoodMetadata } from '@/types/database'
 
 interface SolidFoodSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (metadata: SolidFoodMetadata, recordedAt: Date) => void
+  initialData?: { metadata: SolidFoodMetadata; recordedAt: Date }
 }
 
-const SolidFoodSheet = ({ open, onOpenChange, onSubmit }: SolidFoodSheetProps) => {
+const SolidFoodSheet = ({ open, onOpenChange, onSubmit, initialData }: SolidFoodSheetProps) => {
+  const familyCode = useFamilyStore((s) => s.familyCode)
+  const solidFoodDefaults = useDefaultsStore((s) => s.getDefaults(familyCode ?? '').solidFood)
   const [foodName, setFoodName] = useState('')
-  const [amount, setAmount] = useState('')
   const [time, setTime] = useState(() => roundToNearest5(new Date()))
 
-  const handleOpenChange = (next: boolean) => {
-    if (next) {
-      setFoodName('')
-      setAmount('')
-      setTime(roundToNearest5(new Date()))
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setFoodName(initialData.metadata.food_name)
+        setTime(initialData.recordedAt)
+      } else {
+        setFoodName(solidFoodDefaults.food_name)
+        setTime(roundToNearest5(new Date()))
+      }
     }
-    onOpenChange(next)
-  }
+  }, [open, initialData, solidFoodDefaults])
 
   const handleSubmit = () => {
     if (!foodName.trim()) return
-    onSubmit(
-      { food_name: foodName.trim(), amount: amount.trim() },
-      time,
-    )
-    handleOpenChange(false)
+    onSubmit({ food_name: foodName.trim() }, time)
+    onOpenChange(false)
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-2xl">
         <SheetHeader>
           <div className="flex items-center gap-2">
@@ -51,8 +55,8 @@ const SolidFoodSheet = ({ open, onOpenChange, onSubmit }: SolidFoodSheetProps) =
               <UtensilsCrossed className="h-5 w-5 text-amber-700" strokeWidth={2} />
             </div>
             <div>
-              <SheetTitle>먹어요 기록</SheetTitle>
-              <SheetDescription>무엇을 얼마나 먹었나요?</SheetDescription>
+              <SheetTitle>{initialData ? '먹어요 수정' : '먹어요 기록'}</SheetTitle>
+              <SheetDescription>무엇을 먹었나요?</SheetDescription>
             </div>
           </div>
         </SheetHeader>
@@ -60,25 +64,14 @@ const SolidFoodSheet = ({ open, onOpenChange, onSubmit }: SolidFoodSheetProps) =
           <TimePicker value={time} onChange={setTime} />
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="food-name">음식 이름</Label>
+            <Label htmlFor="food-name">먹은 것</Label>
             <Input
               id="food-name"
-              placeholder="예: 감자죽, 소고기퓨레, 바나나..."
+              placeholder="예: 감자죽 반 그릇, 바나나 조금..."
               value={foodName}
               onChange={(e) => setFoodName(e.target.value)}
               className="h-12 text-base"
               autoFocus
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="food-amount">먹은 양</Label>
-            <Input
-              id="food-amount"
-              placeholder="예: 반 그릇, 50ml, 조금..."
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="h-12 text-base"
             />
           </div>
 
@@ -87,7 +80,7 @@ const SolidFoodSheet = ({ open, onOpenChange, onSubmit }: SolidFoodSheetProps) =
             disabled={!foodName.trim()}
             onClick={handleSubmit}
           >
-            기록하기
+            {initialData ? '수정하기' : '기록하기'}
           </Button>
         </div>
       </SheetContent>

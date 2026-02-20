@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { GlassWater } from 'lucide-react'
 import {
   Sheet,
@@ -13,29 +13,39 @@ import { Label } from '@/components/ui/label'
 import TimePicker, { roundToNearest5 } from '@/components/activity/TimePicker'
 import { DRINK_TYPE_LABELS } from '@/lib/activityConfig'
 import { cn } from '@/lib/utils'
+import { useFamilyStore } from '@/stores/familyStore'
+import { useDefaultsStore } from '@/stores/defaultsStore'
 import type { DrinkType, DrinkMetadata } from '@/types/database'
 
 interface DrinkSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (metadata: DrinkMetadata, recordedAt: Date) => void
+  initialData?: { metadata: DrinkMetadata; recordedAt: Date }
 }
 
-const DRINK_TYPES: DrinkType[] = ['milk', 'water']
+const DRINK_TYPES: DrinkType[] = ['formula', 'milk', 'water']
 
-const DrinkSheet = ({ open, onOpenChange, onSubmit }: DrinkSheetProps) => {
+const DrinkSheet = ({ open, onOpenChange, onSubmit, initialData }: DrinkSheetProps) => {
+  const familyCode = useFamilyStore((s) => s.familyCode)
+  const drinkDefaults = useDefaultsStore((s) => s.getDefaults(familyCode ?? '').drink)
   const [drinkType, setDrinkType] = useState<DrinkType | null>(null)
   const [amountMl, setAmountMl] = useState('')
   const [time, setTime] = useState(() => roundToNearest5(new Date()))
 
-  const handleOpenChange = (next: boolean) => {
-    if (next) {
-      setDrinkType(null)
-      setAmountMl('')
-      setTime(roundToNearest5(new Date()))
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setDrinkType(initialData.metadata.drink_type)
+        setAmountMl(initialData.metadata.amount_ml > 0 ? String(initialData.metadata.amount_ml) : '')
+        setTime(initialData.recordedAt)
+      } else {
+        setDrinkType(drinkDefaults.drink_type)
+        setAmountMl(drinkDefaults.amount_ml)
+        setTime(roundToNearest5(new Date()))
+      }
     }
-    onOpenChange(next)
-  }
+  }, [open, initialData, drinkDefaults])
 
   const handleSubmit = () => {
     if (!drinkType) return
@@ -43,11 +53,11 @@ const DrinkSheet = ({ open, onOpenChange, onSubmit }: DrinkSheetProps) => {
       { drink_type: drinkType, amount_ml: Number(amountMl) || 0 },
       time,
     )
-    handleOpenChange(false)
+    onOpenChange(false)
   }
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="rounded-t-2xl">
         <SheetHeader>
           <div className="flex items-center gap-2">
@@ -55,7 +65,7 @@ const DrinkSheet = ({ open, onOpenChange, onSubmit }: DrinkSheetProps) => {
               <GlassWater className="h-5 w-5 text-sky-700" strokeWidth={2} />
             </div>
             <div>
-              <SheetTitle>마셔요 기록</SheetTitle>
+              <SheetTitle>{initialData ? '마셔요 수정' : '마셔요 기록'}</SheetTitle>
               <SheetDescription>무엇을 얼마나 마셨나요?</SheetDescription>
             </div>
           </div>
@@ -65,7 +75,7 @@ const DrinkSheet = ({ open, onOpenChange, onSubmit }: DrinkSheetProps) => {
 
           <div className="flex flex-col gap-1.5">
             <Label>종류</Label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {DRINK_TYPES.map((dt) => (
                 <button
                   key={dt}
@@ -102,7 +112,7 @@ const DrinkSheet = ({ open, onOpenChange, onSubmit }: DrinkSheetProps) => {
             disabled={!drinkType}
             onClick={handleSubmit}
           >
-            기록하기
+            {initialData ? '수정하기' : '기록하기'}
           </Button>
         </div>
       </SheetContent>
