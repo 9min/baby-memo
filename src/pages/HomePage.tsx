@@ -8,8 +8,9 @@ import ActivityButton from '@/components/activity/ActivityButton'
 import ActivityCard from '@/components/activity/ActivityCard'
 import SolidFoodSheet from '@/components/activity/SolidFoodSheet'
 import DrinkSheet from '@/components/activity/DrinkSheet'
+import SupplementSheet from '@/components/activity/SupplementSheet'
 import DiaperSheet from '@/components/activity/DiaperSheet'
-import type { ActivityType, SolidFoodMetadata, DrinkMetadata, DiaperMetadata } from '@/types/database'
+import type { ActivityType, SolidFoodMetadata, DrinkMetadata, SupplementMetadata, DiaperMetadata } from '@/types/database'
 
 const HomePage = () => {
   const familyId = useFamilyStore((s) => s.familyId)
@@ -19,6 +20,7 @@ const HomePage = () => {
 
   const [solidFoodOpen, setSolidFoodOpen] = useState(false)
   const [drinkOpen, setDrinkOpen] = useState(false)
+  const [supplementOpen, setSupplementOpen] = useState(false)
   const [diaperOpen, setDiaperOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
@@ -36,6 +38,9 @@ const HomePage = () => {
         break
       case 'drink':
         setDrinkOpen(true)
+        break
+      case 'supplement':
+        setSupplementOpen(true)
         break
       case 'diaper':
         setDiaperOpen(true)
@@ -67,6 +72,18 @@ const HomePage = () => {
     showToast('마셔요 기록 완료')
   }
 
+  const handleSupplement = (metadata: SupplementMetadata, recordedAt: Date) => {
+    if (!familyId) return
+    recordActivity({
+      familyId,
+      deviceId,
+      type: 'supplement',
+      recordedAt: recordedAt.toISOString(),
+      metadata,
+    })
+    showToast('영양제 기록 완료')
+  }
+
   const handleDiaper = (metadata: DiaperMetadata, recordedAt: Date) => {
     if (!familyId) return
     recordActivity({
@@ -86,7 +103,7 @@ const HomePage = () => {
         <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
           활동 기록
         </h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {ACTIVITY_TYPES.map((type) => (
             <ActivityButton
               key={type}
@@ -141,6 +158,11 @@ const HomePage = () => {
         open={drinkOpen}
         onOpenChange={setDrinkOpen}
         onSubmit={handleDrink}
+      />
+      <SupplementSheet
+        open={supplementOpen}
+        onOpenChange={setSupplementOpen}
+        onSubmit={handleSupplement}
       />
       <DiaperSheet
         open={diaperOpen}

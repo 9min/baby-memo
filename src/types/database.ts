@@ -14,7 +14,7 @@ export interface Device {
   updated_at: string
 }
 
-export type ActivityType = 'solid_food' | 'drink' | 'diaper'
+export type ActivityType = 'solid_food' | 'drink' | 'supplement' | 'diaper'
 export type DrinkType = 'milk' | 'water'
 export type DiaperType = 'pee' | 'poo'
 export type DiaperAmount = 'little' | 'normal' | 'much'
@@ -34,7 +34,11 @@ export interface DiaperMetadata {
   amount: DiaperAmount
 }
 
-export type ActivityMetadata = SolidFoodMetadata | DrinkMetadata | DiaperMetadata
+export interface SupplementMetadata {
+  supplement_names: string[]
+}
+
+export type ActivityMetadata = SolidFoodMetadata | DrinkMetadata | DiaperMetadata | SupplementMetadata
 
 export interface Activity {
   id: string
@@ -44,5 +48,12 @@ export interface Activity {
   recorded_at: string
   memo: string | null
   metadata: ActivityMetadata
+  created_at: string
+}
+
+export interface SupplementPreset {
+  id: string
+  family_id: string
+  name: string
   created_at: string
 }

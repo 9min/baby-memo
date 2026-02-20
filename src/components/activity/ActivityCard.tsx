@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { ACTIVITY_CONFIGS, DRINK_TYPE_LABELS, DIAPER_TYPE_LABELS, DIAPER_AMOUNT_LABELS } from '@/lib/activityConfig'
 import { useActivityStore } from '@/stores/activityStore'
 import { cn } from '@/lib/utils'
-import type { Activity, SolidFoodMetadata, DrinkMetadata, DiaperMetadata } from '@/types/database'
+import type { Activity, SolidFoodMetadata, DrinkMetadata, DiaperMetadata, SupplementMetadata } from '@/types/database'
 
 function getActivityDetail(activity: Activity): string {
   switch (activity.type) {
@@ -23,6 +23,10 @@ function getActivityDetail(activity: Activity): string {
       const parts = [DRINK_TYPE_LABELS[meta.drink_type]]
       if (meta.amount_ml > 0) parts.push(`${meta.amount_ml}ml`)
       return parts.join(' · ')
+    }
+    case 'supplement': {
+      const meta = activity.metadata as SupplementMetadata
+      return meta.supplement_names.join(', ')
     }
     case 'diaper': {
       const meta = activity.metadata as DiaperMetadata
