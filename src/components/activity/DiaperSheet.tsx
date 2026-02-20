@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import TimePicker from '@/components/activity/TimePicker'
+import TimePicker, { roundToNearest5 } from '@/components/activity/TimePicker'
 import { DIAPER_TYPE_LABELS, DIAPER_AMOUNT_LABELS } from '@/lib/activityConfig'
 import { cn } from '@/lib/utils'
 import type { DiaperType, DiaperAmount, DiaperMetadata } from '@/types/database'
@@ -26,13 +26,13 @@ const DIAPER_AMOUNTS: DiaperAmount[] = ['little', 'normal', 'much']
 const DiaperSheet = ({ open, onOpenChange, onSubmit }: DiaperSheetProps) => {
   const [diaperType, setDiaperType] = useState<DiaperType | null>(null)
   const [amount, setAmount] = useState<DiaperAmount | null>(null)
-  const [time, setTime] = useState(() => new Date())
+  const [time, setTime] = useState(() => roundToNearest5(new Date()))
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
       setDiaperType(null)
       setAmount(null)
-      setTime(new Date())
+      setTime(roundToNearest5(new Date()))
     }
     onOpenChange(next)
   }

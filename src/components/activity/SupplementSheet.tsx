@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import TimePicker from '@/components/activity/TimePicker'
+import TimePicker, { roundToNearest5 } from '@/components/activity/TimePicker'
 import { useSupplementStore } from '@/stores/supplementStore'
 import { useFamilyStore } from '@/stores/familyStore'
 import { cn } from '@/lib/utils'
@@ -28,7 +28,7 @@ const SupplementSheet = ({ open, onOpenChange, onSubmit }: SupplementSheetProps)
   const fetchPresets = useSupplementStore((s) => s.fetchPresets)
 
   const [selected, setSelected] = useState<string[]>([])
-  const [time, setTime] = useState(() => new Date())
+  const [time, setTime] = useState(() => roundToNearest5(new Date()))
 
   useEffect(() => {
     if (open && familyId) {
@@ -39,7 +39,7 @@ const SupplementSheet = ({ open, onOpenChange, onSubmit }: SupplementSheetProps)
   const handleOpenChange = (next: boolean) => {
     if (next) {
       setSelected([])
-      setTime(new Date())
+      setTime(roundToNearest5(new Date()))
     }
     onOpenChange(next)
   }

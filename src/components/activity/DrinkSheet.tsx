@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import TimePicker from '@/components/activity/TimePicker'
+import TimePicker, { roundToNearest5 } from '@/components/activity/TimePicker'
 import { DRINK_TYPE_LABELS } from '@/lib/activityConfig'
 import { cn } from '@/lib/utils'
 import type { DrinkType, DrinkMetadata } from '@/types/database'
@@ -26,13 +26,13 @@ const DRINK_TYPES: DrinkType[] = ['milk', 'water']
 const DrinkSheet = ({ open, onOpenChange, onSubmit }: DrinkSheetProps) => {
   const [drinkType, setDrinkType] = useState<DrinkType | null>(null)
   const [amountMl, setAmountMl] = useState('')
-  const [time, setTime] = useState(() => new Date())
+  const [time, setTime] = useState(() => roundToNearest5(new Date()))
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
       setDrinkType(null)
       setAmountMl('')
-      setTime(new Date())
+      setTime(roundToNearest5(new Date()))
     }
     onOpenChange(next)
   }

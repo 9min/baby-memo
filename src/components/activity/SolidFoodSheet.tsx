@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import TimePicker from '@/components/activity/TimePicker'
+import TimePicker, { roundToNearest5 } from '@/components/activity/TimePicker'
 import type { SolidFoodMetadata } from '@/types/database'
 
 interface SolidFoodSheetProps {
@@ -22,13 +22,13 @@ interface SolidFoodSheetProps {
 const SolidFoodSheet = ({ open, onOpenChange, onSubmit }: SolidFoodSheetProps) => {
   const [foodName, setFoodName] = useState('')
   const [amount, setAmount] = useState('')
-  const [time, setTime] = useState(() => new Date())
+  const [time, setTime] = useState(() => roundToNearest5(new Date()))
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
       setFoodName('')
       setAmount('')
-      setTime(new Date())
+      setTime(roundToNearest5(new Date()))
     }
     onOpenChange(next)
   }
