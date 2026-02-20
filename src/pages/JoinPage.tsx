@@ -52,13 +52,13 @@ const JoinPage = () => {
     <div className="flex min-h-screen flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm flex flex-col items-center gap-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">{APP_NAME}</h1>
-          <p className="mt-2 text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight">{APP_NAME}</h1>
+          <p className="mt-2 text-base text-muted-foreground">
             아기 활동을 간편하게 기록하세요
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <Label htmlFor="family-code">가족 코드</Label>
             <Input
@@ -67,22 +67,24 @@ const JoinPage = () => {
               placeholder="예: BABY01"
               value={code}
               onChange={handleChange}
-              className="h-12 text-center text-lg tracking-widest uppercase"
+              className="h-14 text-center text-xl tracking-[0.3em] uppercase font-semibold"
               autoFocus
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               영문 대문자와 숫자 {MIN_CODE_LENGTH}~{MAX_CODE_LENGTH}자리.
               새 코드를 입력하면 가족방이 만들어지고, 기존 코드를 입력하면 참여합니다.
             </p>
           </div>
 
           {error && (
-            <p className="text-sm text-destructive text-center">{error}</p>
+            <div className="rounded-lg bg-destructive/10 px-3 py-2.5 text-center">
+              <p className="text-sm font-medium text-destructive">{error}</p>
+            </div>
           )}
 
           <Button
             type="submit"
-            className="h-12 text-base"
+            className="h-14 cursor-pointer text-base font-semibold"
             disabled={!isValid || loading}
           >
             {loading ? '입장 중...' : '시작하기'}

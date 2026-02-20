@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useFamily } from '@/hooks/useFamily'
+import { useActivitySubscription } from '@/hooks/useActivitySubscription'
 import FamilyGuard from '@/components/family/FamilyGuard'
 import AppShell from '@/components/layout/AppShell'
 import JoinPage from '@/pages/JoinPage'
@@ -9,6 +10,7 @@ import SettingsPage from '@/pages/SettingsPage'
 
 const AppRoutes = () => {
   useFamily()
+  useActivitySubscription()
 
   return (
     <Routes>
