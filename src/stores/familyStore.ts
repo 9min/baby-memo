@@ -5,6 +5,7 @@ import { FAMILY_CODE_KEY } from '@/lib/constants'
 import { useDefaultsStore } from '@/stores/defaultsStore'
 import { generateNickname } from '@/lib/nicknameGenerator'
 import type { Device } from '@/types/database'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 function generatePassword(): string {
   return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
@@ -31,6 +32,7 @@ interface FamilyState {
   initialized: boolean
   nickname: string | null
   members: Device[]
+  deviceChannel: RealtimeChannel | null
 
   initialize: () => Promise<void>
   checkFamilyExists: (code: string) => Promise<boolean>
@@ -40,6 +42,9 @@ interface FamilyState {
   leave: () => Promise<void>
   setNickname: (nickname: string) => Promise<void>
   fetchMembers: (familyId: string) => Promise<void>
+  kickMember: (targetDeviceId: string) => Promise<void>
+  subscribeDevices: (familyId: string) => void
+  unsubscribeDevices: () => void
 }
 
 export const useFamilyStore = create<FamilyState>((set, get) => ({
@@ -50,6 +55,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   initialized: false,
   nickname: null,
   members: [],
+  deviceChannel: null,
 
   initialize: async () => {
     const savedCode = localStorage.getItem(FAMILY_CODE_KEY)
@@ -277,6 +283,80 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
 
     if (data) {
       set({ members: data as Device[] })
+    }
+  },
+
+  kickMember: async (targetDeviceId: string) => {
+    const { familyId, deviceId, members } = get()
+    if (!familyId) return
+
+    // Only room owner (members[0]) can kick
+    if (members.length === 0 || members[0].device_id !== deviceId) {
+      throw new Error('방장만 구성원을 내보낼 수 있습니다.')
+    }
+
+    // Cannot kick self
+    if (targetDeviceId === deviceId) {
+      throw new Error('자기 자신을 내보낼 수 없습니다.')
+    }
+
+    const { error } = await supabase
+      .from('devices')
+      .delete()
+      .eq('device_id', targetDeviceId)
+      .eq('family_id', familyId)
+
+    if (error) {
+      throw new Error('구성원 내보내기에 실패했습니다.')
+    }
+
+    await get().fetchMembers(familyId)
+  },
+
+  subscribeDevices: (familyId: string) => {
+    const existing = get().deviceChannel
+    if (existing) {
+      supabase.removeChannel(existing)
+    }
+
+    const channel = supabase
+      .channel(`devices:${familyId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'devices',
+          filter: `family_id=eq.${familyId}`,
+        },
+        (payload) => {
+          const deleted = payload.old as { device_id: string }
+          if (deleted.device_id === get().deviceId) {
+            // Current device was kicked — clear state and redirect
+            localStorage.removeItem(FAMILY_CODE_KEY)
+            set({
+              familyId: null,
+              familyCode: null,
+              familyPassword: null,
+              nickname: null,
+              members: [],
+            })
+          } else {
+            // Another member was removed — refresh members list
+            get().fetchMembers(familyId)
+          }
+        },
+      )
+      .subscribe()
+
+    set({ deviceChannel: channel })
+  },
+
+  unsubscribeDevices: () => {
+    const channel = get().deviceChannel
+    if (channel) {
+      supabase.removeChannel(channel)
+      set({ deviceChannel: null })
     }
   },
 }))

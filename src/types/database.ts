@@ -48,7 +48,7 @@ export type ActivityMetadata = SolidFoodMetadata | DrinkMetadata | DiaperMetadat
 export interface Activity {
   id: string
   family_id: string
-  device_id: string
+  device_id: string | null
   type: ActivityType
   recorded_at: string
   memo: string | null

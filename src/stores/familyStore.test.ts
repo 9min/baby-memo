@@ -464,6 +464,99 @@ describe('familyStore', () => {
     })
   })
 
+  describe('kickMember', () => {
+    it('successfully kicks another member when room owner', async () => {
+      useFamilyStore.setState({
+        familyId: 'fam-1',
+        deviceId: 'dev-owner',
+        members: [
+          { id: '1', device_id: 'dev-owner', family_id: 'fam-1', nickname: '방장', created_at: '2025-01-01', updated_at: '2025-01-01' },
+          { id: '2', device_id: 'dev-target', family_id: 'fam-1', nickname: '멤버', created_at: '2025-01-02', updated_at: '2025-01-02' },
+        ],
+      })
+
+      const eqSecond = vi.fn().mockResolvedValue({ data: null, error: null })
+      let callCount = 0
+      mockFrom.mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          // delete().eq().eq()
+          return mockQueryBuilder({
+            eq: vi.fn().mockReturnValue({ eq: eqSecond }),
+          })
+        }
+        // fetchMembers
+        return mockQueryBuilder({
+          order: vi.fn().mockResolvedValue({
+            data: [{ id: '1', device_id: 'dev-owner', family_id: 'fam-1', nickname: '방장', created_at: '2025-01-01', updated_at: '2025-01-01' }],
+            error: null,
+          }),
+        })
+      })
+
+      await useFamilyStore.getState().kickMember('dev-target')
+      expect(mockFrom).toHaveBeenCalledWith('devices')
+      expect(useFamilyStore.getState().members).toHaveLength(1)
+    })
+
+    it('throws when non-owner tries to kick', async () => {
+      useFamilyStore.setState({
+        familyId: 'fam-1',
+        deviceId: 'dev-member',
+        members: [
+          { id: '1', device_id: 'dev-owner', family_id: 'fam-1', nickname: '방장', created_at: '2025-01-01', updated_at: '2025-01-01' },
+          { id: '2', device_id: 'dev-member', family_id: 'fam-1', nickname: '멤버', created_at: '2025-01-02', updated_at: '2025-01-02' },
+        ],
+      })
+
+      await expect(
+        useFamilyStore.getState().kickMember('dev-owner'),
+      ).rejects.toThrow('방장만 구성원을 내보낼 수 있습니다.')
+    })
+
+    it('throws when trying to kick self', async () => {
+      useFamilyStore.setState({
+        familyId: 'fam-1',
+        deviceId: 'dev-owner',
+        members: [
+          { id: '1', device_id: 'dev-owner', family_id: 'fam-1', nickname: '방장', created_at: '2025-01-01', updated_at: '2025-01-01' },
+        ],
+      })
+
+      await expect(
+        useFamilyStore.getState().kickMember('dev-owner'),
+      ).rejects.toThrow('자기 자신을 내보낼 수 없습니다.')
+    })
+
+    it('does nothing when no familyId', async () => {
+      useFamilyStore.setState({ familyId: null })
+      await useFamilyStore.getState().kickMember('dev-target')
+      expect(mockFrom).not.toHaveBeenCalled()
+    })
+
+    it('throws when supabase delete fails', async () => {
+      useFamilyStore.setState({
+        familyId: 'fam-1',
+        deviceId: 'dev-owner',
+        members: [
+          { id: '1', device_id: 'dev-owner', family_id: 'fam-1', nickname: '방장', created_at: '2025-01-01', updated_at: '2025-01-01' },
+          { id: '2', device_id: 'dev-target', family_id: 'fam-1', nickname: '멤버', created_at: '2025-01-02', updated_at: '2025-01-02' },
+        ],
+      })
+
+      const eqSecond = vi.fn().mockResolvedValue({ data: null, error: { message: 'fail' } })
+      mockFrom.mockReturnValue(
+        mockQueryBuilder({
+          eq: vi.fn().mockReturnValue({ eq: eqSecond }),
+        }),
+      )
+
+      await expect(
+        useFamilyStore.getState().kickMember('dev-target'),
+      ).rejects.toThrow('구성원 내보내기에 실패했습니다.')
+    })
+  })
+
   describe('fetchMembers', () => {
     it('sets members from supabase response', async () => {
       const mockMembers = [
