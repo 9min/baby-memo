@@ -267,6 +267,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     }
 
     set({ nickname })
+    get().fetchMembers(familyId)
   },
 
   fetchMembers: async (familyId: string) => {
