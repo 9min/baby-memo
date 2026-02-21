@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useLayoutEffect } from 'react'
 import { useFamily } from '@/hooks/useFamily'
 import { useActivitySubscription } from '@/hooks/useActivitySubscription'
 import { useTheme } from '@/hooks/useTheme'
@@ -13,8 +13,10 @@ import StatsPage from '@/pages/StatsPage'
 
 const ScrollToTop = () => {
   const { pathname } = useLocation()
-  useEffect(() => {
-    window.scrollTo(0, 0)
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0 })
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
   }, [pathname])
   return null
 }
