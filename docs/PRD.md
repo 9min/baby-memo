@@ -46,7 +46,7 @@
 - **영양제** (영양제): 프리셋 관리 + 선택 기록, 메모
 - **기저귀** (기저귀): 종류(소변/대변/혼합), 양(많음/보통/적음), 메모
 - **수면** (잠자요): 시작시간/종료시간 기록, 수면 시간 자동 계산
-- 원터치 기록 + 시간 직접 편집 가능 (TimePicker)
+- 원터치 기록 + 시간/날짜 직접 편집 가능 (TimePicker)
 - 기본값 저장 기능 (기기별 localStorage)
 
 #### F3: 타임라인
@@ -131,7 +131,7 @@
 | 보안 | 가족방 비밀번호(4자리), MVP에서는 RLS 미적용 |
 | 가용성 | Supabase 무료 티어 범위 내 운영 |
 | 언어 | 한국어 UI |
-| 테스트 | 329개 테스트 (Vitest + Testing Library) |
+| 테스트 | 374개 테스트 (Vitest + Testing Library) |
 | CI | GitHub Actions PR 체크 (typecheck + lint + test + build) |
 
 ## 6. 성공 지표
@@ -141,7 +141,7 @@
 - 새로고침 후 자동 복원 성공
 - 2대 이상 기기에서 같은 family_id 공유 확인
 - `npm run build` 에러 없이 성공
-- 329개 테스트 통과
+- 374개 테스트 통과
 
 ### 향후 지표
 - DAU (Daily Active Users)
