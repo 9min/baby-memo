@@ -332,7 +332,11 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
         (payload) => {
           const deleted = payload.old as { device_id: string }
           if (deleted.device_id === get().deviceId) {
-            // Current device was kicked — clear state and redirect
+            // Current device was kicked — clean up channel and clear state
+            const ch = get().deviceChannel
+            if (ch) {
+              supabase.removeChannel(ch)
+            }
             localStorage.removeItem(FAMILY_CODE_KEY)
             set({
               familyId: null,
@@ -340,11 +344,24 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
               familyPassword: null,
               nickname: null,
               members: [],
+              deviceChannel: null,
             })
           } else {
             // Another member was removed — refresh members list
             get().fetchMembers(familyId)
           }
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'devices',
+          filter: `family_id=eq.${familyId}`,
+        },
+        () => {
+          get().fetchMembers(familyId)
         },
       )
       .subscribe()

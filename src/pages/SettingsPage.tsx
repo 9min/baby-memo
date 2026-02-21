@@ -247,7 +247,11 @@ const SettingsPage = () => {
 
   const handleKickMember = async (targetDeviceId: string) => {
     setKickTargetId(null)
-    await kickMember(targetDeviceId)
+    try {
+      await kickMember(targetDeviceId)
+    } catch (error) {
+      console.error('Failed to kick member:', error)
+    }
   }
 
   const isSolidFoodChanged = defaultFoodName.trim() !== defaults.solidFood.food_name
@@ -389,6 +393,7 @@ const SettingsPage = () => {
                       size="icon"
                       className="h-7 w-7 cursor-pointer text-muted-foreground hover:text-destructive"
                       onClick={() => setKickTargetId(member.device_id)}
+                      aria-label={`${member.nickname ?? '구성원'} 내보내기`}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
