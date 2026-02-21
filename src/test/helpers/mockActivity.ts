@@ -7,6 +7,7 @@ import type {
   DiaperMetadata,
   SupplementMetadata,
   SleepMetadata,
+  MemoMetadata,
 } from '@/types/database'
 
 let counter = 0
@@ -22,6 +23,7 @@ const defaultMetadata: Record<ActivityType, ActivityMetadata> = {
   diaper: { diaper_type: 'pee', amount: 'normal' } satisfies DiaperMetadata,
   supplement: { supplement_names: ['비타민D'] } satisfies SupplementMetadata,
   sleep: { note: '', end_time: null } satisfies SleepMetadata,
+  memo: { content: '메모 내용' } satisfies MemoMetadata,
 }
 
 export function createMockActivity(

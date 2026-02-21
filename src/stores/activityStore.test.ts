@@ -190,12 +190,30 @@ describe('activityStore', () => {
       expect(useActivityStore.getState().activities[0].id).toBe('a2')
     })
 
+    it('optimistically removes activity from recentActivities', async () => {
+      const activities = [
+        createMockActivity({ id: 'a1' }),
+        createMockActivity({ id: 'a2' }),
+      ]
+      useActivityStore.setState({ activities, recentActivities: activities })
+
+      mockFrom.mockReturnValue(
+        mockQueryBuilder({
+          eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      )
+
+      await useActivityStore.getState().deleteActivity('a1')
+      expect(useActivityStore.getState().recentActivities).toHaveLength(1)
+      expect(useActivityStore.getState().recentActivities[0].id).toBe('a2')
+    })
+
     it('rolls back on error', async () => {
       const activities = [
         createMockActivity({ id: 'a1' }),
         createMockActivity({ id: 'a2' }),
       ]
-      useActivityStore.setState({ activities })
+      useActivityStore.setState({ activities, recentActivities: activities })
 
       mockFrom.mockReturnValue(
         mockQueryBuilder({
@@ -211,6 +229,7 @@ describe('activityStore', () => {
       ).rejects.toThrow('활동 삭제에 실패했습니다.')
 
       expect(useActivityStore.getState().activities).toHaveLength(2)
+      expect(useActivityStore.getState().recentActivities).toHaveLength(2)
     })
   })
 

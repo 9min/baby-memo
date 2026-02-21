@@ -54,8 +54,8 @@ describe('SupplementSheet', () => {
   it('shows presets as selectable items', () => {
     useSupplementStore.setState({
       presets: [
-        { id: 'p1', family_id: 'fam-1', name: '비타민D', created_at: '2025-01-01' },
-        { id: 'p2', family_id: 'fam-1', name: '오메가3', created_at: '2025-01-01' },
+        { id: 'p1', family_id: 'fam-1', name: '비타민D', sort_order: 0, created_at: '2025-01-01' },
+        { id: 'p2', family_id: 'fam-1', name: '오메가3', sort_order: 1, created_at: '2025-01-01' },
       ],
     })
     render(
@@ -68,7 +68,7 @@ describe('SupplementSheet', () => {
   it('submit button is disabled when no supplements selected', () => {
     useSupplementStore.setState({
       presets: [
-        { id: 'p1', family_id: 'fam-1', name: '비타민D', created_at: '2025-01-01' },
+        { id: 'p1', family_id: 'fam-1', name: '비타민D', sort_order: 0, created_at: '2025-01-01' },
       ],
     })
     render(

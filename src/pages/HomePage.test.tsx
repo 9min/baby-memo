@@ -30,6 +30,7 @@ describe('HomePage', () => {
     })
     useActivityStore.setState({
       activities: [],
+      recentActivities: [],
       loading: false,
       selectedDate: new Date(),
       setSelectedDate: vi.fn(),
@@ -53,13 +54,14 @@ describe('HomePage', () => {
     expect(screen.getByText('활동 기록')).toBeInTheDocument()
   })
 
-  it('renders all 5 activity buttons', () => {
+  it('renders all 6 activity buttons', () => {
     renderHomePage()
     expect(screen.getByText('먹어요')).toBeInTheDocument()
     expect(screen.getByText('마셔요')).toBeInTheDocument()
     expect(screen.getByText('영양제')).toBeInTheDocument()
     expect(screen.getByText('잠자요')).toBeInTheDocument()
     expect(screen.getByText('기저귀')).toBeInTheDocument()
+    expect(screen.getByText('메모')).toBeInTheDocument()
   })
 
   it('shows empty state when no activities', () => {
@@ -69,7 +71,7 @@ describe('HomePage', () => {
 
   it('shows recent activities', () => {
     useActivityStore.setState({
-      activities: [
+      recentActivities: [
         createMockActivity({ type: 'solid_food', recorded_at: '2025-01-15T10:00:00' }),
       ],
     })
@@ -78,8 +80,8 @@ describe('HomePage', () => {
     expect(screen.getByText('감자죽')).toBeInTheDocument()
   })
 
-  it('shows max 5 recent activities', () => {
-    const activities = Array.from({ length: 7 }, (_, i) =>
+  it('renders all recent activities from store', () => {
+    const activities = Array.from({ length: 5 }, (_, i) =>
       createMockActivity({
         id: `a${i}`,
         type: 'solid_food',
@@ -87,21 +89,18 @@ describe('HomePage', () => {
         metadata: { food_name: `음식${i}` },
       }),
     )
-    useActivityStore.setState({ activities })
+    useActivityStore.setState({ recentActivities: activities })
     renderHomePage()
 
-    const foodNames = activities.slice(0, 5).map((a) => {
+    for (const a of activities) {
       const meta = a.metadata as { food_name: string }
-      return meta.food_name
-    })
-    for (const name of foodNames) {
-      expect(screen.getByText(name)).toBeInTheDocument()
+      expect(screen.getByText(meta.food_name)).toBeInTheDocument()
     }
   })
 
   it('shows "더보기" link when activities exist', () => {
     useActivityStore.setState({
-      activities: [createMockActivity()],
+      recentActivities: [createMockActivity()],
     })
     renderHomePage()
     expect(screen.getByText('더보기')).toBeInTheDocument()
@@ -143,7 +142,7 @@ describe('HomePage', () => {
 
   it('shows device nickname in activity cards', () => {
     useActivityStore.setState({
-      activities: [
+      recentActivities: [
         createMockActivity({ type: 'solid_food', device_id: 'dev-1', recorded_at: '2025-01-15T10:00:00' }),
       ],
     })

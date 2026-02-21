@@ -8,6 +8,7 @@ export const useActivitySubscription = () => {
   const subscribe = useActivityStore((s) => s.subscribe)
   const unsubscribe = useActivityStore((s) => s.unsubscribe)
   const fetchActivities = useActivityStore((s) => s.fetchActivities)
+  const fetchRecentActivities = useActivityStore((s) => s.fetchRecentActivities)
   const selectedDate = useActivityStore((s) => s.selectedDate)
   const subscribeBabies = useBabyStore((s) => s.subscribe)
   const unsubscribeBabies = useBabyStore((s) => s.unsubscribe)
@@ -34,4 +35,9 @@ export const useActivitySubscription = () => {
     if (!familyId) return
     fetchActivities(familyId, selectedDate)
   }, [familyId, selectedDate, fetchActivities])
+
+  useEffect(() => {
+    if (!familyId) return
+    fetchRecentActivities(familyId)
+  }, [familyId, fetchRecentActivities])
 }

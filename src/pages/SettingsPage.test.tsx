@@ -45,6 +45,7 @@ describe('SettingsPage', () => {
       fetchPresets: vi.fn(),
       addPreset: vi.fn(),
       deletePreset: vi.fn(),
+      reorderPresets: vi.fn(),
       subscribe: vi.fn(),
       unsubscribe: vi.fn(),
     })
@@ -160,7 +161,7 @@ describe('SettingsPage', () => {
   it('shows supplement preset list', () => {
     useSupplementStore.setState({
       presets: [
-        { id: 'p1', family_id: 'fam-1', name: '비타민D', created_at: '2025-01-01' },
+        { id: 'p1', family_id: 'fam-1', name: '비타민D', sort_order: 0, created_at: '2025-01-01' },
       ],
     })
     renderSettingsPage()

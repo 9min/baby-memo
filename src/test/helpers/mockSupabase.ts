@@ -24,18 +24,25 @@ export function mockSupabaseQuery(result: MockQueryResult = {}) {
     gte: vi.fn().mockReturnThis(),
     lte: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data, error }),
   }
 
   // Make terminal methods resolve correctly
   // For non-single queries, mock the builder itself to resolve
   const resolveValue = { data, error, count }
-  builder.order.mockResolvedValue(resolveValue)
+  builder.limit.mockResolvedValue(resolveValue)
+  // order() is both thenable (for queries ending at order) and chainable (for .order().limit())
+  builder.order.mockReturnValue(Object.assign(
+    Promise.resolve(resolveValue),
+    { limit: builder.limit },
+  ))
   builder.eq.mockImplementation(function (this: typeof builder) {
     return Object.assign({}, this, {
       eq: this.eq,
       single: this.single,
       order: this.order,
+      limit: this.limit,
       select: this.select,
     })
   })
@@ -69,9 +76,18 @@ function createBuilder(result: MockQueryResult) {
     eq: vi.fn().mockReturnThis(),
     gte: vi.fn().mockReturnThis(),
     lte: vi.fn().mockReturnThis(),
-    order: vi.fn().mockResolvedValue({ data, error, count }),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue({ data, error, count }),
     single: vi.fn().mockResolvedValue({ data, error }),
   }
+
+  // order can also be terminal (when no limit follows)
+  builder.order.mockResolvedValue({ data, error, count })
+  // Make order return the builder for chaining to limit
+  builder.order.mockReturnValue(Object.assign(
+    Promise.resolve({ data, error, count }),
+    { limit: builder.limit },
+  ))
 
   return builder
 }
