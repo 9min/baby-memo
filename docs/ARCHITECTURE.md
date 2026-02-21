@@ -241,7 +241,8 @@ src/
 │                      #   checkbox, input, label, separator, sheet, tabs, textarea)
 ├── hooks/             # useFamily, useActivitySubscription, useTheme
 ├── lib/               # supabase, constants, deviceUtils, utils, activityConfig,
-│                      #   timeGrouping, statsUtils, babyUtils, dataExport
+│                      #   timeGrouping, timeUtils, statsUtils, babyUtils,
+│                      #   dataExport, nicknameGenerator
 ├── pages/             # JoinPage, HomePage, TimelinePage, StatsPage, SettingsPage
 ├── stores/            # familyStore, activityStore, babyStore, supplementStore,
 │                      #   statsStore, defaultsStore, themeStore

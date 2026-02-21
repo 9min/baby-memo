@@ -43,7 +43,8 @@ src/
                      #   input, label, separator, sheet, tabs, textarea)
   hooks/             # useFamily, useActivitySubscription, useTheme
   lib/               # supabase, constants, deviceUtils, utils, activityConfig,
-                     #   timeGrouping, statsUtils, babyUtils, dataExport
+                     #   timeGrouping, timeUtils, statsUtils, babyUtils,
+                     #   dataExport, nicknameGenerator
   pages/             # JoinPage, HomePage, TimelinePage, StatsPage, SettingsPage
   stores/            # familyStore, activityStore, babyStore, supplementStore,
                      #   statsStore, defaultsStore, themeStore
@@ -112,7 +113,7 @@ docs/                # PRD, 아키텍처, 개발 플로우, Git 워크플로우
 ## Supabase
 - 클라이언트: `src/lib/supabase.ts`
 - 환경변수: `.env.local`에 `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-- 마이그레이션: `supabase/migrations/` 디렉토리에 순번 prefix (00001~00007)
+- 마이그레이션: `supabase/migrations/` 디렉토리에 순번 prefix (00001~00009)
 - Realtime 활성 테이블: `activities`, `babies`, `supplement_presets`
 
 ## shadcn/ui 컴포넌트 추가
@@ -130,7 +131,7 @@ npx shadcn@latest add [component-name]
 - **환경**: jsdom
 
 ### 현황
-- 37개 테스트 파일, 329개 테스트
+- 38개 테스트 파일, 374개 테스트
 
 ### 명령어
 ```bash
