@@ -1,4 +1,4 @@
-import { UtensilsCrossed, GlassWater, Pill, Droplets, Moon } from 'lucide-react'
+import { UtensilsCrossed, GlassWater, Pill, Droplets, Moon, StickyNote } from 'lucide-react'
 import type { ActivityType, DrinkType, DiaperType, DiaperAmount } from '@/types/database'
 import type { LucideIcon } from 'lucide-react'
 
@@ -46,9 +46,16 @@ export const ACTIVITY_CONFIGS: Record<ActivityType, ActivityConfig> = {
     bgColor: 'bg-indigo-50 dark:bg-indigo-950/40',
     textColor: 'text-indigo-600 dark:text-indigo-400',
   },
+  memo: {
+    type: 'memo',
+    label: '메모',
+    icon: StickyNote,
+    bgColor: 'bg-rose-50 dark:bg-rose-950/40',
+    textColor: 'text-rose-600 dark:text-rose-400',
+  },
 }
 
-export const ACTIVITY_TYPES: ActivityType[] = ['solid_food', 'drink', 'supplement', 'sleep', 'diaper']
+export const ACTIVITY_TYPES: ActivityType[] = ['solid_food', 'drink', 'supplement', 'sleep', 'diaper', 'memo']
 
 export const DRINK_TYPE_LABELS: Record<DrinkType, string> = {
   formula: '분유',

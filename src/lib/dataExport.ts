@@ -8,6 +8,7 @@ import type {
   DiaperMetadata,
   SupplementMetadata,
   SleepMetadata,
+  MemoMetadata,
 } from '@/types/database'
 
 const escapeCSV = (value: string): string => {
@@ -42,6 +43,8 @@ const formatDetail = (activity: Activity): string => {
       }
       return '취침'
     }
+    case 'memo':
+      return (meta as MemoMetadata).content || ''
     default:
       return ''
   }

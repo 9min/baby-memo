@@ -142,6 +142,7 @@ export const ACTIVITY_CHART_COLORS: Record<ActivityType, string> = {
   supplement: '#8b5cf6',
   diaper: '#10b981',
   sleep: '#6366f1',
+  memo: '#f43f5e',
 }
 
 export const DRINK_CHART_COLORS: Record<DrinkType, string> = {

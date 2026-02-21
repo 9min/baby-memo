@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ActivityCard from './ActivityCard'
 import { createMockActivity, resetMockActivityCounter } from '@/test/helpers/mockActivity'
-import type { SolidFoodMetadata, DrinkMetadata, DiaperMetadata, SupplementMetadata, SleepMetadata } from '@/types/database'
+import type { SolidFoodMetadata, DrinkMetadata, DiaperMetadata, SupplementMetadata, SleepMetadata, MemoMetadata } from '@/types/database'
 
 // Mock the store
 vi.mock('@/stores/activityStore', () => ({
@@ -68,6 +68,15 @@ describe('ActivityCard', () => {
     })
     render(<ActivityCard activity={activity} />)
     expect(screen.getByText('비타민D, 오메가3')).toBeInTheDocument()
+  })
+
+  it('displays memo content for memo type', () => {
+    const activity = createMockActivity({
+      type: 'memo',
+      metadata: { content: '컨디션 좋음' } satisfies MemoMetadata,
+    })
+    render(<ActivityCard activity={activity} />)
+    expect(screen.getByText('컨디션 좋음')).toBeInTheDocument()
   })
 
   it('displays 취침 for sleep with no end_time and no note', () => {

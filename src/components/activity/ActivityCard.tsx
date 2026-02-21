@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { ACTIVITY_CONFIGS, DRINK_TYPE_LABELS, DIAPER_TYPE_LABELS, DIAPER_AMOUNT_LABELS } from '@/lib/activityConfig'
 import { useActivityStore } from '@/stores/activityStore'
 import { cn } from '@/lib/utils'
-import type { Activity, SolidFoodMetadata, DrinkMetadata, DiaperMetadata, SupplementMetadata, SleepMetadata } from '@/types/database'
+import type { Activity, SolidFoodMetadata, DrinkMetadata, DiaperMetadata, SupplementMetadata, SleepMetadata, MemoMetadata } from '@/types/database'
 
 function getActivityDetail(activity: Activity): string {
   switch (activity.type) {
@@ -39,6 +39,10 @@ function getActivityDetail(activity: Activity): string {
         parts.push(meta.note)
       }
       return parts.length > 0 ? parts.join(' · ') : '취침'
+    }
+    case 'memo': {
+      const meta = activity.metadata as MemoMetadata
+      return meta.content
     }
   }
 }

@@ -13,6 +13,7 @@ import DrinkSheet from '@/components/activity/DrinkSheet'
 import SupplementSheet from '@/components/activity/SupplementSheet'
 import DiaperSheet from '@/components/activity/DiaperSheet'
 import SleepSheet from '@/components/activity/SleepSheet'
+import MemoSheet from '@/components/activity/MemoSheet'
 import type {
   Activity,
   ActivityType,
@@ -22,27 +23,24 @@ import type {
   SupplementMetadata,
   DiaperMetadata,
   SleepMetadata,
+  MemoMetadata,
 } from '@/types/database'
 
 const HomePage = () => {
   const familyId = useFamilyStore((s) => s.familyId)
   const deviceId = useFamilyStore((s) => s.deviceId)
   const members = useFamilyStore((s) => s.members)
-  const activities = useActivityStore((s) => s.activities)
+  const recentActivities = useActivityStore((s) => s.recentActivities)
   const babies = useBabyStore((s) => s.babies)
   const recordActivity = useActivityStore((s) => s.recordActivity)
   const updateActivity = useActivityStore((s) => s.updateActivity)
-  const setSelectedDate = useActivityStore((s) => s.setSelectedDate)
-
-  useEffect(() => {
-    setSelectedDate(new Date())
-  }, [setSelectedDate])
 
   const [solidFoodOpen, setSolidFoodOpen] = useState(false)
   const [drinkOpen, setDrinkOpen] = useState(false)
   const [supplementOpen, setSupplementOpen] = useState(false)
   const [diaperOpen, setDiaperOpen] = useState(false)
   const [sleepOpen, setSleepOpen] = useState(false)
+  const [memoOpen, setMemoOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -60,8 +58,6 @@ const HomePage = () => {
     }
     return map
   }, [members])
-
-  const recentActivities = useMemo(() => activities.slice(0, 5), [activities])
 
   const showToast = useCallback((message: string) => {
     setToast(message)
@@ -87,6 +83,9 @@ const HomePage = () => {
       case 'sleep':
         setSleepOpen(true)
         break
+      case 'memo':
+        setMemoOpen(true)
+        break
     }
   }, [])
 
@@ -107,6 +106,9 @@ const HomePage = () => {
         break
       case 'sleep':
         setSleepOpen(true)
+        break
+      case 'memo':
+        setMemoOpen(true)
         break
     }
   }, [])
@@ -153,6 +155,10 @@ const HomePage = () => {
     ? { metadata: editingActivity.metadata as SleepMetadata, recordedAt: new Date(editingActivity.recorded_at) }
     : undefined, [editingActivity])
 
+  const memoInitial = useMemo(() => editingActivity?.type === 'memo'
+    ? { metadata: editingActivity.metadata as MemoMetadata, recordedAt: new Date(editingActivity.recorded_at) }
+    : undefined, [editingActivity])
+
   const handleSolidFoodOpenChange = useCallback((open: boolean) => {
     setSolidFoodOpen(open)
     if (!open) setEditingActivity(null)
@@ -178,6 +184,11 @@ const HomePage = () => {
     if (!open) setEditingActivity(null)
   }, [])
 
+  const handleMemoOpenChange = useCallback((open: boolean) => {
+    setMemoOpen(open)
+    if (!open) setEditingActivity(null)
+  }, [])
+
   const handleSolidFoodSubmit = useCallback((metadata: SolidFoodMetadata, recordedAt: Date) => {
     handleSubmit('solid_food', metadata, recordedAt, '먹어요 기록 완료')
   }, [handleSubmit])
@@ -196,6 +207,10 @@ const HomePage = () => {
 
   const handleSleepSubmit = useCallback((metadata: SleepMetadata, recordedAt: Date) => {
     handleSubmit('sleep', metadata, recordedAt, '잠자요 기록 완료')
+  }, [handleSubmit])
+
+  const handleMemoSubmit = useCallback((metadata: MemoMetadata, recordedAt: Date) => {
+    handleSubmit('memo', metadata, recordedAt, '메모 기록 완료')
   }, [handleSubmit])
 
   return (
@@ -295,6 +310,12 @@ const HomePage = () => {
         onOpenChange={handleSleepOpenChange}
         onSubmit={handleSleepSubmit}
         initialData={sleepInitial}
+      />
+      <MemoSheet
+        open={memoOpen}
+        onOpenChange={handleMemoOpenChange}
+        onSubmit={handleMemoSubmit}
+        initialData={memoInitial}
       />
 
       {/* Success Toast */}

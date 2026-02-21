@@ -9,7 +9,7 @@ import {
 
 describe('ACTIVITY_CONFIGS', () => {
   it('has config for every activity type', () => {
-    const types = ['solid_food', 'drink', 'supplement', 'diaper', 'sleep'] as const
+    const types = ['solid_food', 'drink', 'supplement', 'diaper', 'sleep', 'memo'] as const
     for (const type of types) {
       expect(ACTIVITY_CONFIGS[type]).toBeDefined()
     }
@@ -50,19 +50,24 @@ describe('ACTIVITY_CONFIGS', () => {
   it('sleep config has correct Korean label', () => {
     expect(ACTIVITY_CONFIGS.sleep.label).toBe('잠자요')
   })
+
+  it('memo config has correct Korean label', () => {
+    expect(ACTIVITY_CONFIGS.memo.label).toBe('메모')
+  })
 })
 
 describe('ACTIVITY_TYPES', () => {
-  it('contains all 5 activity types', () => {
-    expect(ACTIVITY_TYPES).toHaveLength(5)
+  it('contains all 6 activity types', () => {
+    expect(ACTIVITY_TYPES).toHaveLength(6)
   })
 
-  it('contains solid_food, drink, supplement, sleep, diaper', () => {
+  it('contains solid_food, drink, supplement, sleep, diaper, memo', () => {
     expect(ACTIVITY_TYPES).toContain('solid_food')
     expect(ACTIVITY_TYPES).toContain('drink')
     expect(ACTIVITY_TYPES).toContain('supplement')
     expect(ACTIVITY_TYPES).toContain('sleep')
     expect(ACTIVITY_TYPES).toContain('diaper')
+    expect(ACTIVITY_TYPES).toContain('memo')
   })
 })
 

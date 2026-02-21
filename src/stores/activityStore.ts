@@ -5,6 +5,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 
 interface ActivityState {
   activities: Activity[]
+  recentActivities: Activity[]
   loading: boolean
   selectedDate: Date
   channel: RealtimeChannel | null
@@ -12,6 +13,7 @@ interface ActivityState {
 
   setSelectedDate: (date: Date) => void
   fetchActivities: (familyId: string, date: Date) => Promise<void>
+  fetchRecentActivities: (familyId: string) => Promise<void>
   fetchMonthlyActivityDates: (familyId: string, year: number, month: number) => Promise<void>
   recordActivity: (params: {
     familyId: string
@@ -33,6 +35,7 @@ interface ActivityState {
 
 export const useActivityStore = create<ActivityState>((set, get) => ({
   activities: [],
+  recentActivities: [],
   loading: false,
   selectedDate: new Date(),
   channel: null,
@@ -55,9 +58,20 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
       .eq('family_id', familyId)
       .gte('recorded_at', startOfDay.toISOString())
       .lte('recorded_at', endOfDay.toISOString())
-      .order('recorded_at', { ascending: false })
+      .order('recorded_at', { ascending: true })
 
     set({ activities: (data as Activity[]) ?? [], loading: false })
+  },
+
+  fetchRecentActivities: async (familyId: string) => {
+    const { data } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('family_id', familyId)
+      .order('recorded_at', { ascending: false })
+      .limit(5)
+
+    set({ recentActivities: (data as Activity[]) ?? [] })
   },
 
   fetchMonthlyActivityDates: async (familyId: string, year: number, month: number) => {
@@ -110,9 +124,10 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
   },
 
   deleteActivity: async (activityId: string) => {
-    const prev = get().activities
+    const prev = { activities: get().activities, recentActivities: get().recentActivities }
     set((state) => ({
       activities: state.activities.filter((a) => a.id !== activityId),
+      recentActivities: state.recentActivities.filter((a) => a.id !== activityId),
     }))
 
     const { error } = await supabase
@@ -121,7 +136,7 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
       .eq('id', activityId)
 
     if (error) {
-      set({ activities: prev })
+      set({ activities: prev.activities, recentActivities: prev.recentActivities })
       throw new Error('활동 삭제에 실패했습니다.')
     }
   },
@@ -154,12 +169,12 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
             set((state) => {
               const list = state.activities
               const newTime = activityDate.getTime()
-              // Binary search for insertion index (descending order)
+              // Binary search for insertion index (ascending order)
               let lo = 0
               let hi = list.length
               while (lo < hi) {
                 const mid = (lo + hi) >>> 1
-                if (new Date(list[mid].recorded_at).getTime() > newTime) {
+                if (new Date(list[mid].recorded_at).getTime() < newTime) {
                   lo = mid + 1
                 } else {
                   hi = mid
@@ -170,6 +185,13 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
               return { activities: next }
             })
           }
+          // Update recentActivities
+          set((state) => {
+            const updated = [newActivity, ...state.recentActivities]
+              .sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())
+              .slice(0, 5)
+            return { recentActivities: updated }
+          })
         },
       )
       .on(
@@ -184,6 +206,9 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
           const updated = payload.new as Activity
           set((state) => ({
             activities: state.activities
+              .map((a) => (a.id === updated.id ? updated : a))
+              .sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()),
+            recentActivities: state.recentActivities
               .map((a) => (a.id === updated.id ? updated : a))
               .sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime()),
           }))
@@ -201,6 +226,7 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
           const deleted = payload.old as { id: string }
           set((state) => ({
             activities: state.activities.filter((a) => a.id !== deleted.id),
+            recentActivities: state.recentActivities.filter((a) => a.id !== deleted.id),
           }))
         },
       )
