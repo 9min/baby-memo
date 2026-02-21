@@ -9,34 +9,20 @@ interface TimePickerProps {
   label?: string
 }
 
-export const roundToNearest5 = (date: Date): Date => {
-  const rounded = new Date(date)
-  const minutes = rounded.getMinutes()
-  const remainder = minutes % 5
-  if (remainder < 3) {
-    rounded.setMinutes(minutes - remainder, 0, 0)
-  } else {
-    rounded.setMinutes(minutes + (5 - remainder), 0, 0)
-  }
-  if (rounded > new Date()) {
-    rounded.setMinutes(rounded.getMinutes() - 5)
-  }
-  return rounded
-}
-
 const HOURS_12 = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
   const [editing, setEditing] = useState(false)
 
+  const wouldBeFuture = value.getTime() + 5 * 60000 > Date.now() // eslint-disable-line react-hooks/purity
+
   const adjust = (minutes: number) => {
+    const now = Date.now()
     const next = new Date(value.getTime() + minutes * 60000)
-    if (next <= new Date()) {
+    if (next.getTime() <= now) {
       onChange(next)
     }
   }
-
-  const isFuture = (minutes: number) => value.getTime() + minutes * 60000 > Date.now()
 
   const hours24 = value.getHours()
   const isPM = hours24 >= 12
@@ -119,7 +105,7 @@ const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
           variant="outline"
           className="h-10 w-12 cursor-pointer text-xs font-semibold"
           onClick={() => adjust(5)}
-          disabled={isFuture(5)}
+          disabled={wouldBeFuture}
         >
           +5
         </Button>
