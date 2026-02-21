@@ -3,41 +3,51 @@
 ## 1. 시스템 개요
 
 ```
-┌─────────────────────────────────────────────────┐
-│                   클라이언트                       │
-│  React 19 + TypeScript + Vite                    │
-│                                                   │
-│  ┌──────────┐  ┌──────────┐  ┌───────────────┐  │
-│  │ JoinPage │  │ HomePage │  │ SettingsPage  │  │
-│  └────┬─────┘  └────┬─────┘  └──────┬────────┘  │
-│       │              │               │            │
-│  ┌────▼──────────────▼───────────────▼────────┐  │
-│  │           Zustand (familyStore)             │  │
-│  │  familyId, familyCode, deviceId, nickname   │  │
-│  └────────────────────┬───────────────────────┘  │
-│                       │                           │
-│  ┌────────────────────▼───────────────────────┐  │
-│  │          Supabase Client (JS SDK)           │  │
-│  │          REST API + Realtime WS             │  │
-│  └────────────────────┬───────────────────────┘  │
-└───────────────────────┼───────────────────────────┘
-                        │ HTTPS / WSS
-┌───────────────────────▼───────────────────────────┐
-│                  Supabase (Cloud)                   │
-│                                                     │
-│  ┌──────────────┐  ┌────────────────────────────┐  │
-│  │  PostgreSQL   │  │  Realtime (WebSocket)      │  │
-│  │  - families   │  │  - family_id 필터 구독      │  │
-│  │  - devices    │  │  - INSERT/UPDATE/DELETE     │  │
-│  └──────────────┘  └────────────────────────────┘  │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                      클라이언트                             │
+│  React 19 + TypeScript 5.9 + Vite 7 + PWA                │
+│                                                            │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────────┐  │
+│  │ JoinPage │ │ HomePage │ │StatsPage │ │SettingsPage │  │
+│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └──────┬──────┘  │
+│       │      ┌──────┴──────┐     │              │          │
+│       │      │TimelinePage │     │              │          │
+│       │      └──────┬──────┘     │              │          │
+│  ┌────▼─────────────▼────────────▼──────────────▼──────┐  │
+│  │              Zustand Stores (7개)                     │  │
+│  │  familyStore · activityStore · babyStore             │  │
+│  │  supplementStore · statsStore · defaultsStore        │  │
+│  │  themeStore                                          │  │
+│  └──────────────────────┬──────────────────────────────┘  │
+│                          │                                  │
+│  ┌──────────────────────▼──────────────────────────────┐  │
+│  │           Supabase Client (JS SDK)                   │  │
+│  │           REST API + Realtime WebSocket              │  │
+│  └──────────────────────┬──────────────────────────────┘  │
+└──────────────────────────┼──────────────────────────────────┘
+                           │ HTTPS / WSS
+┌──────────────────────────▼──────────────────────────────────┐
+│                    Supabase (Cloud)                           │
+│                                                               │
+│  ┌────────────────────┐  ┌──────────────────────────────┐   │
+│  │   PostgreSQL        │  │  Realtime (WebSocket)        │   │
+│  │   - families        │  │  - activities (INSERT/DELETE) │   │
+│  │   - devices         │  │  - babies (INSERT/DELETE)     │   │
+│  │   - activities      │  │  - supplement_presets         │   │
+│  │   - babies          │  │    (INSERT/DELETE)            │   │
+│  │   - supplement_     │  │  - family_id 필터 구독        │   │
+│  │     presets         │  │                               │   │
+│  └────────────────────┘  └──────────────────────────────┘   │
+└───────────────────────────────────────────────────────────────┘
 ```
 
 ## 2. 인증/식별 모델
 
-### 가족 코드 기반 (OAuth 대체)
+### 가족 코드 + 비밀번호 기반
 ```
-가족 코드 입력 → families 테이블 조회/생성
+가족 코드 입력 → families 테이블 조회
+  ├── 미존재 → 가족방 생성 (비밀번호 자동 생성)
+  └── 존재 → 4자리 비밀번호 입력 → 검증
                     ↓
               devices 테이블에 기기 등록
                     ↓
@@ -64,6 +74,7 @@
 families
 ├── id          UUID (PK, auto)
 ├── code        TEXT (UNIQUE, 6-8자, ^[A-Z0-9]+$)
+├── password    TEXT (4자리 숫자, nullable)
 ├── created_at  TIMESTAMPTZ
 └── updated_at  TIMESTAMPTZ
 
@@ -74,16 +85,59 @@ devices
 ├── nickname    TEXT (nullable)
 ├── created_at  TIMESTAMPTZ
 └── updated_at  TIMESTAMPTZ
+
+activities
+├── id          UUID (PK, auto)
+├── family_id   UUID (FK → families.id, CASCADE)
+├── device_id   TEXT
+├── type        TEXT (solid_food | drink | supplement | diaper | sleep)
+├── recorded_at TIMESTAMPTZ
+├── metadata    JSONB (타입별 상세 데이터)
+└── created_at  TIMESTAMPTZ
+
+babies
+├── id          UUID (PK, auto)
+├── family_id   UUID (FK → families.id, CASCADE)
+├── name        TEXT
+├── birth_date  DATE
+└── created_at  TIMESTAMPTZ
+
+supplement_presets
+├── id          UUID (PK, auto)
+├── family_id   UUID (FK → families.id, CASCADE)
+├── name        TEXT
+└── created_at  TIMESTAMPTZ
 ```
 
 ### 관계
 - `families` 1:N `devices` (하나의 가족방에 여러 기기)
+- `families` 1:N `activities` (하나의 가족방에 여러 활동 기록)
+- `families` 1:N `babies` (하나의 가족방에 여러 아기)
+- `families` 1:N `supplement_presets` (가족별 영양제 프리셋)
 - `device_id`는 UNIQUE — 하나의 기기는 하나의 가족방에만 소속
+
+### 활동 메타데이터 (JSONB)
+```typescript
+// solid_food
+{ menu?: string, amount?: 'lots' | 'normal' | 'little' | 'refused', memo?: string }
+
+// drink
+{ drinkType: 'formula' | 'breast_milk' | 'water' | 'juice' | 'tea', amount?: number, memo?: string }
+
+// supplement
+{ items: string[], memo?: string }
+
+// diaper
+{ diaperType: 'pee' | 'poop' | 'mixed', amount?: 'lots' | 'normal' | 'little', memo?: string }
+
+// sleep
+{ startTime: string, endTime?: string, memo?: string }
+```
 
 ### 보안 (MVP)
 - RLS 비활성화 — 앱 레벨에서 `family_id` 필터링
+- 가족방 접근에 4자리 비밀번호 필요
 - Supabase anon key는 클라이언트에 노출되나, 테이블 구조가 단순하여 위험도 낮음
-- Phase 2에서 RLS 활성화 예정
 
 ## 4. 프론트엔드 아키텍처
 
@@ -92,6 +146,7 @@ devices
 /join           → JoinPage (공개, 가족 코드 입력)
 /               → FamilyGuard → AppShell → HomePage
 /timeline       → FamilyGuard → AppShell → TimelinePage
+/stats          → FamilyGuard → AppShell → StatsPage
 /settings       → FamilyGuard → AppShell → SettingsPage
 ```
 
@@ -103,20 +158,38 @@ FamilyGuard 렌더링
   └── familyId 존재 → <Outlet /> (자식 라우트 렌더링)
 ```
 
-### 상태 관리 (Zustand)
+### 상태 관리 (Zustand — 7개 스토어)
+
 ```
 familyStore
-├── State
-│   ├── familyId: string | null
-│   ├── familyCode: string | null
-│   ├── deviceId: string
-│   ├── nickname: string | null
-│   └── initialized: boolean
-├── Actions
-│   ├── initialize()      → localStorage에서 코드 복원 + DB 검증
-│   ├── joinOrCreate()    → 가족방 참여/생성 + 기기 등록
-│   ├── leave()           → localStorage 삭제 + 상태 초기화
-│   └── updateNickname()  → DB 닉네임 업데이트
+├── State: familyId, familyCode, deviceId, nickname, initialized
+├── Actions: initialize, checkFamilyExists, joinOrCreate, updatePassword, getDeviceCount, leave
+
+activityStore
+├── State: activities, selectedDate, loading, monthlyActivityDates
+├── Actions: setSelectedDate, fetchActivities, fetchMonthlyActivityDates,
+│            recordActivity, updateActivity, deleteActivity, subscribe, unsubscribe
+
+babyStore
+├── State: babies, loading
+├── Actions: fetchBabies, addBaby, deleteBaby, subscribe, unsubscribe
+
+supplementStore
+├── State: presets, loading
+├── Actions: fetchPresets, addPreset, deletePreset, subscribe, unsubscribe
+
+statsStore
+├── State: period, dateRange, activityCounts, drinkIntakes, sleepDurations, loading
+├── Actions: setPeriod, navigatePrev, navigateNext, goToToday, fetchStats
+
+defaultsStore (localStorage 영속)
+├── State: defaults (familyId별 활동 기본값)
+├── Actions: getDefaults, setSolidFoodDefaults, setDrinkDefaults,
+│            setSupplementDefaults, setDiaperDefaults, clearDefaults
+
+themeStore (localStorage 영속)
+├── State: theme ('light' | 'dark' | 'system')
+├── Actions: setTheme
 ```
 
 ### 컴포넌트 계층
@@ -128,32 +201,63 @@ App
 │       └── FamilyGuard
 │           └── AppShell
 │               ├── Outlet (페이지 컨텐츠)
-│               └── BottomNav
-│                   ├── 홈 (/)
-│                   ├── 타임라인 (/timeline)
-│                   └── 설정 (/settings)
+│               │   ├── HomePage
+│               │   │   ├── ActivityButton (x5)
+│               │   │   ├── SolidFoodSheet / DrinkSheet / SupplementSheet / DiaperSheet / SleepSheet
+│               │   │   └── ActivityCard
+│               │   ├── TimelinePage
+│               │   │   ├── DateNavigator
+│               │   │   ├── MonthlyCalendar (월별 뷰)
+│               │   │   ├── ActivityCard
+│               │   │   └── SolidFoodSheet / DrinkSheet / SupplementSheet / DiaperSheet / SleepSheet
+│               │   ├── StatsPage
+│               │   │   ├── PeriodTabs
+│               │   │   ├── StatsDateNavigator
+│               │   │   ├── StatsSummaryCard
+│               │   │   ├── ActivityCountChart
+│               │   │   ├── DrinkIntakeChart
+│               │   │   └── SleepDurationChart
+│               │   └── SettingsPage
+│               ├── BottomNav
+│               │   ├── 홈 (/)
+│               │   ├── 타임라인 (/timeline)
+│               │   ├── 통계 (/stats)
+│               │   └── 설정 (/settings)
+│               └── InstallPrompt (PWA 설치 프롬프트)
 ```
 
-## 5. 디렉토리 구조 원칙
+## 5. 디렉토리 구조
 
 ```
 src/
-├── components/        # 재사용 가능한 UI 컴포넌트
-│   ├── family/        # 가족 시스템 관련 (FamilyGuard)
-│   ├── layout/        # 레이아웃 (AppShell, BottomNav)
-│   └── ui/            # shadcn/ui 원자 컴포넌트
-├── hooks/             # 커스텀 React 훅
-├── lib/               # 유틸리티, 외부 서비스 클라이언트
-├── pages/             # 라우트별 페이지 컴포넌트
-├── stores/            # Zustand 상태 저장소
-└── types/             # TypeScript 타입/인터페이스 정의
+├── components/
+│   ├── activity/      # 활동 기록 관련 (ActivityButton, ActivityCard, DateNavigator,
+│   │                  #   MonthlyCalendar, TimePicker, *Sheet 5종)
+│   ├── family/        # 가족 시스템 (FamilyGuard)
+│   ├── layout/        # 레이아웃 (AppShell, BottomNav, InstallPrompt)
+│   ├── stats/         # 통계 차트 (ActivityCountChart, DrinkIntakeChart,
+│   │                  #   SleepDurationChart, StatsSummaryCard, StatsDateNavigator, PeriodTabs)
+│   └── ui/            # shadcn/ui 컴포넌트 (alert-dialog, badge, button, card,
+│                      #   checkbox, input, label, separator, sheet, tabs, textarea)
+├── hooks/             # useFamily, useActivitySubscription, useTheme
+├── lib/               # supabase, constants, deviceUtils, utils, activityConfig,
+│                      #   timeGrouping, statsUtils, babyUtils, dataExport
+├── pages/             # JoinPage, HomePage, TimelinePage, StatsPage, SettingsPage
+├── stores/            # familyStore, activityStore, babyStore, supplementStore,
+│                      #   statsStore, defaultsStore, themeStore
+├── test/              # setup.ts, helpers/ (mockActivity, mockSupabase,
+│                      #   renderWithRouter, zustandTestUtils)
+├── types/             # database.ts, stats.ts
+├── App.tsx
+└── main.tsx
 ```
 
 ### 원칙
-- **기능별 그룹핑**: `components/family/`, `components/layout/` 등
+- **기능별 그룹핑**: `components/activity/`, `components/stats/` 등
 - **단일 책임**: 각 파일은 하나의 역할만 담당
 - **경로 Alias**: `@/` = `src/` (tsconfig + vite 설정)
 - **shadcn/ui**: `components/ui/`에 위치, 직접 수정 가능
+- **테스트 co-location**: 소스 파일 옆에 `.test.tsx` 배치
 
 ## 6. 데이터 흐름
 
@@ -162,16 +266,16 @@ src/
 [사용자 코드 입력]
     │
     ▼
-JoinPage.handleSubmit()
+JoinPage.handleCodeSubmit()
     │
     ▼
-familyStore.joinOrCreate(code)
+familyStore.checkFamilyExists(code)
     │
-    ├── supabase.from('families').select().eq('code', code)
-    │   ├── 존재 → familyId = existing.id
-    │   └── 미존재 → supabase.from('families').insert({code})
-    │
-    ├── supabase.from('devices').upsert({device_id, family_id})
+    ├── 미존재 → joinOrCreate(code) → 가족방 생성 + 기기 등록
+    └── 존재 → 비밀번호 입력 화면
+                  │
+                  ▼
+              joinOrCreate(code, password) → 비밀번호 검증 + 기기 등록
     │
     ├── localStorage.setItem('baby-memo-family-code', code)
     │
@@ -179,6 +283,42 @@ familyStore.joinOrCreate(code)
            │
            ▼
     FamilyGuard: familyId 존재 → Outlet 렌더링
+```
+
+### 활동 기록 플로우
+```
+[홈 → 활동 버튼 탭]
+    │
+    ▼
+ActivityButton → Sheet 열림 (SolidFoodSheet 등)
+    │
+    ▼
+사용자 입력 → onSubmit(metadata, recordedAt)
+    │
+    ▼
+activityStore.recordActivity({ familyId, deviceId, type, recordedAt, metadata })
+    │
+    ├── supabase.from('activities').insert(...)
+    │
+    └── Realtime 구독 → 낙관적 업데이트 → 즉시 UI 반영
+```
+
+### Realtime 구독 (활성)
+```typescript
+// useActivitySubscription에서 설정
+supabase
+  .channel(`activities:${familyId}`)
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'activities',
+    filter: `family_id=eq.${familyId}`,
+  }, handleInsert)
+  .on('postgres_changes', {
+    event: 'DELETE',
+    ...
+  }, handleDelete)
+  .subscribe()
 ```
 
 ### 앱 초기화 플로우
@@ -191,35 +331,29 @@ App 마운트 → useFamily() → familyStore.initialize()
     │       ├── 유효 → familyId/familyCode 설정
     │       └── 무효 → localStorage 삭제
     │
-    └── initialized = true
+    ├── initialized = true
+    │
+    └── useActivitySubscription() → Realtime 구독 시작
+        ├── activities 구독
+        ├── babies 구독
+        └── supplement_presets 구독
 ```
 
-## 7. 향후 확장 포인트
+## 7. 기술 스택 상세
 
-### Realtime 구독 (Phase 2)
-```ts
-supabase
-  .channel(`family:${familyId}`)
-  .on('postgres_changes', {
-    event: '*',
-    schema: 'public',
-    table: 'activities',
-    filter: `family_id=eq.${familyId}`,
-  }, handleChange)
-  .subscribe()
-```
-
-### 활동 기록 테이블 (Phase 2)
-```sql
-create table public.activities (
-  id uuid default gen_random_uuid() primary key,
-  family_id uuid references families(id) on delete cascade,
-  device_id text references devices(device_id),
-  type text not null,        -- 'feeding', 'sleep', 'diaper', 'bath'
-  started_at timestamptz not null,
-  ended_at timestamptz,
-  memo text,
-  metadata jsonb default '{}',
-  created_at timestamptz default now()
-);
-```
+| 영역 | 기술 | 버전 |
+|------|------|------|
+| 프레임워크 | React | 19.2 |
+| 언어 | TypeScript | 5.9 (strict) |
+| 빌드 | Vite | 7.3 |
+| 스타일링 | Tailwind CSS | 4.2 |
+| UI 라이브러리 | shadcn/ui (new-york) | Radix UI 기반 |
+| 상태관리 | Zustand | 5.0 |
+| 라우팅 | React Router DOM | 7.13 |
+| 백엔드 | Supabase (DB + Realtime) | JS SDK 2.97 |
+| 차트 | Recharts | 3.7 |
+| 날짜 | date-fns | 4.1 |
+| 아이콘 | Lucide React | 0.575 |
+| PWA | vite-plugin-pwa | 1.2 |
+| 테스트 | Vitest + Testing Library | 4.0 / 16.3 |
+| CI | GitHub Actions | PR checks |

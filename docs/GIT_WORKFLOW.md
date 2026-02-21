@@ -18,10 +18,11 @@ main                    ← 프로덕션 배포 브랜치
 
 # 예시
 feat/activity-recording
-feat/realtime-sync
+feat/stats-dashboard
+feat/monthly-calendar
 fix/family-code-validation
 refactor/store-structure
-docs/add-architecture
+docs/update-architecture
 chore/update-dependencies
 ```
 
@@ -44,27 +45,26 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 ### Type 종류
 | Type | 설명 | 예시 |
 |------|------|------|
-| `feat` | 새 기능 추가 | `feat: add family code join system` |
+| `feat` | 새 기능 추가 | `feat: 활동 기록 시스템 추가` |
 | `fix` | 버그 수정 | `fix: resolve auto-restore on refresh` |
 | `refactor` | 코드 리팩토링 (기능 변경 없음) | `refactor: extract device utils` |
 | `docs` | 문서 추가/수정 | `docs: add architecture document` |
-| `style` | 코드 스타일 변경 (포매팅 등) | `style: fix indentation` |
-| `chore` | 빌드, 설정, 의존성 등 | `chore: update supabase sdk` |
-| `test` | 테스트 추가/수정 | `test: add family store tests` |
+| `style` | UI/스타일 변경 | `style: UI/UX 전면 개선` |
+| `chore` | 빌드, 설정, 의존성 등 | `chore: add GitHub Actions CI workflow` |
+| `test` | 테스트 추가/수정 | `test: 전체 테스트 인프라 구축` |
 
 ### 작성 규칙
-- 제목: 영문 소문자, 50자 이내, 마침표 없음
-- 제목은 명령형으로 작성 ("add" not "added", "fix" not "fixed")
+- 제목: 영문 또는 한국어, 50자 이내, 마침표 없음
+- 제목은 명령형으로 작성 ("add" not "added", "추가" not "추가됨")
 - 본문: 변경 이유(why) 위주, 72자 줄바꿈
 - Claude와 협업 시 `Co-Authored-By` 포함
 
 ### 예시
 ```
-feat: replace OAuth with family code system
+feat: 통계 대시보드 + 테스트 + 프로필/다크모드 + 달력뷰 + UI 개선
 
-Remove Supabase Auth dependency and implement family code based
-authentication. Users enter a 6-8 character code to create or join
-a family room. Device identification uses localStorage UUID.
+일별/주별/월별 통계 차트, 아기 프로필 관리, 다크모드,
+CSV 내보내기, 월별 달력 뷰, 따뜻한 컬러 테마 적용.
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 ```
@@ -89,15 +89,25 @@ gh pr create --title "feat: add feature" --body "..."
 ## Test plan
 - [ ] npm run build 성공
 - [ ] npm run typecheck 성공
+- [ ] npm test 통과 (329개)
 - [ ] 기능 동작 확인
-- [ ] 엣지 케이스 테스트
 ```
 
 ### PR 머지 전 체크리스트
-- [ ] `npm run build` 성공
+- [ ] `npm run typecheck` 성공
 - [ ] `npm run lint` 에러 없음
+- [ ] `npm test` 전체 통과
+- [ ] `npm run build` 성공
+- [ ] CI (GitHub Actions) 통과
 - [ ] 커밋 메시지 컨벤션 준수
 - [ ] 불필요한 파일 포함되지 않음 (.env, node_modules 등)
+
+### CI 자동 검증
+PR 생성/업데이트 시 GitHub Actions가 자동으로 다음을 검증:
+1. typecheck
+2. lint
+3. test
+4. build
 
 ### 머지 방식
 - **Squash and merge** (기본): 여러 커밋을 하나로 합쳐서 머지
@@ -119,6 +129,7 @@ supabase/.temp/        # Supabase CLI 임시 파일
 package-lock.json      # 의존성 잠금 (반드시 커밋)
 components.json        # shadcn/ui 설정
 supabase/migrations/   # DB 마이그레이션
+.github/workflows/     # CI 워크플로우
 ```
 
 ## 5. 릴리스 관리
@@ -131,8 +142,7 @@ supabase/migrations/   # DB 마이그레이션
   - PATCH: 버그 수정
 
 ### 현재 상태
-- `0.0.0` — MVP 개발 중
-- `0.1.0` — MVP 완료 시점에 태깅 예정
+- `0.1.0` — MVP 완료 + 통계 대시보드 + PWA
 
 ## 6. 주의사항
 
