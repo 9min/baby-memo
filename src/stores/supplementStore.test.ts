@@ -133,6 +133,30 @@ describe('supplementStore', () => {
     })
   })
 
+  describe('reorderPresets', () => {
+    it('throws on error and rolls back', async () => {
+      const presets = [
+        { id: 'p1', family_id: 'fam-1', name: '비타민D', sort_order: 0, created_at: '2025-01-01' },
+        { id: 'p2', family_id: 'fam-1', name: '오메가3', sort_order: 1, created_at: '2025-01-01' },
+      ]
+      useSupplementStore.setState({ presets })
+
+      mockFrom.mockReturnValue(
+        mockQueryBuilder({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: null, error: { message: 'fail' } }),
+          }),
+        }),
+      )
+
+      await expect(
+        useSupplementStore.getState().reorderPresets('fam-1', ['p2', 'p1']),
+      ).rejects.toThrow('영양제 순서 변경에 실패했습니다.')
+
+      expect(useSupplementStore.getState().presets).toEqual(presets)
+    })
+  })
+
   describe('subscribe / unsubscribe', () => {
     it('creates a channel', () => {
       useSupplementStore.getState().subscribe('fam-1')

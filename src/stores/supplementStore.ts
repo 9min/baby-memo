@@ -88,6 +88,7 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
 
     if (hasError) {
       set({ presets: prev })
+      throw new Error('영양제 순서 변경에 실패했습니다.')
     }
   },
 
@@ -110,7 +111,7 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
         (payload) => {
           const newPreset = payload.new as SupplementPreset
           set((state) => ({
-            presets: [...state.presets, newPreset],
+            presets: [...state.presets, newPreset].sort((a, b) => a.sort_order - b.sort_order),
           }))
         },
       )
