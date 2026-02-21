@@ -3,6 +3,8 @@ import { useActivityStore } from '@/stores/activityStore'
 import { useDefaultsStore } from '@/stores/defaultsStore'
 import { useSupplementStore } from '@/stores/supplementStore'
 import { useStatsStore } from '@/stores/statsStore'
+import { useBabyStore } from '@/stores/babyStore'
+import { useThemeStore } from '@/stores/themeStore'
 import { getDateRange } from '@/lib/statsUtils'
 
 export function resetAllStores() {
@@ -29,6 +31,16 @@ export function resetAllStores() {
     presets: [],
     loading: false,
     channel: null,
+  })
+
+  useBabyStore.setState({
+    babies: [],
+    loading: false,
+    channel: null,
+  })
+
+  useThemeStore.setState({
+    theme: 'system',
   })
 
   const now = new Date()

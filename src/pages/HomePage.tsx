@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight, Check } from 'lucide-react'
+import { formatBabyAge } from '@/lib/babyUtils'
 import { useFamilyStore } from '@/stores/familyStore'
 import { useActivityStore } from '@/stores/activityStore'
+import { useBabyStore } from '@/stores/babyStore'
 import { ACTIVITY_CONFIGS, ACTIVITY_TYPES } from '@/lib/activityConfig'
 import ActivityButton from '@/components/activity/ActivityButton'
 import ActivityCard from '@/components/activity/ActivityCard'
@@ -26,6 +28,7 @@ const HomePage = () => {
   const familyId = useFamilyStore((s) => s.familyId)
   const deviceId = useFamilyStore((s) => s.deviceId)
   const activities = useActivityStore((s) => s.activities)
+  const babies = useBabyStore((s) => s.babies)
   const recordActivity = useActivityStore((s) => s.recordActivity)
   const updateActivity = useActivityStore((s) => s.updateActivity)
   const setSelectedDate = useActivityStore((s) => s.setSelectedDate)
@@ -135,6 +138,21 @@ const HomePage = () => {
 
   return (
     <div className="flex flex-col gap-6 py-4">
+      {/* Baby Info */}
+      {babies.length > 0 && (
+        <div className="flex items-center gap-3">
+          {babies.map((baby) => (
+            <div
+              key={baby.id}
+              className="flex items-center gap-1.5 rounded-full bg-pink-50 px-3 py-1.5 dark:bg-pink-950"
+            >
+              <span className="text-sm font-semibold text-pink-700 dark:text-pink-300">{baby.name}</span>
+              <span className="text-xs text-pink-500 dark:text-pink-400">{formatBabyAge(baby.birthdate)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Activity Buttons */}
       <div>
         <h2 className="mb-3 text-sm font-semibold text-muted-foreground">

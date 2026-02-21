@@ -6,6 +6,7 @@ import SettingsPage from './SettingsPage'
 import { useFamilyStore } from '@/stores/familyStore'
 import { useSupplementStore } from '@/stores/supplementStore'
 import { useDefaultsStore } from '@/stores/defaultsStore'
+import { useBabyStore } from '@/stores/babyStore'
 import { resetAllStores } from '@/test/helpers/zustandTestUtils'
 import { renderWithRouter } from '@/test/helpers/renderWithRouter'
 
@@ -41,6 +42,15 @@ describe('SettingsPage', () => {
       unsubscribe: vi.fn(),
     })
     useDefaultsStore.setState({ defaultsByFamily: {} })
+    useBabyStore.setState({
+      babies: [],
+      loading: false,
+      fetchBabies: vi.fn(),
+      addBaby: vi.fn(),
+      deleteBaby: vi.fn(),
+      subscribe: vi.fn(),
+      unsubscribe: vi.fn(),
+    })
   })
 
   it('renders 설정 heading', () => {
@@ -162,7 +172,9 @@ describe('SettingsPage', () => {
     renderSettingsPage()
 
     await user.type(screen.getByPlaceholderText('영양제 이름 추가'), '오메가3')
-    await user.click(screen.getByText('추가'))
+    const addButtons = screen.getAllByText('추가')
+    // The supplement add button is the second one (baby profile add is first)
+    await user.click(addButtons[1])
 
     expect(addPreset).toHaveBeenCalledWith('fam-1', '오메가3')
   })

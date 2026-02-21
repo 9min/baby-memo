@@ -6,6 +6,7 @@ import { useFamilyStore } from '@/stores/familyStore'
 import { useActivityStore } from '@/stores/activityStore'
 import { useDefaultsStore } from '@/stores/defaultsStore'
 import { useSupplementStore } from '@/stores/supplementStore'
+import { useBabyStore } from '@/stores/babyStore'
 import { createMockActivity, resetMockActivityCounter } from '@/test/helpers/mockActivity'
 
 function renderHomePage() {
@@ -37,6 +38,10 @@ describe('HomePage', () => {
       presets: [],
       loading: false,
       fetchPresets: vi.fn(),
+    })
+    useBabyStore.setState({
+      babies: [],
+      loading: false,
     })
   })
 

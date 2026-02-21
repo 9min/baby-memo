@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets } from 'lucide-react'
+import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2 } from 'lucide-react'
+import { formatBabyAge } from '@/lib/babyUtils'
 import { useFamilyStore } from '@/stores/familyStore'
 import { useSupplementStore } from '@/stores/supplementStore'
 import { useDefaultsStore } from '@/stores/defaultsStore'
+import { useThemeStore } from '@/stores/themeStore'
+import { useBabyStore } from '@/stores/babyStore'
+import { exportActivitiesCSV } from '@/lib/dataExport'
 import { DRINK_TYPE_LABELS, DIAPER_TYPE_LABELS, DIAPER_AMOUNT_LABELS } from '@/lib/activityConfig'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import InstallPrompt from '@/components/layout/InstallPrompt'
 import { cn } from '@/lib/utils'
 import type { DrinkType, DiaperType, DiaperAmount } from '@/types/database'
 
@@ -44,6 +49,13 @@ const SettingsPage = () => {
   const subscribeSupplement = useSupplementStore((s) => s.subscribe)
   const unsubscribeSupplement = useSupplementStore((s) => s.unsubscribe)
 
+  const theme = useThemeStore((s) => s.theme)
+  const setTheme = useThemeStore((s) => s.setTheme)
+
+  const babies = useBabyStore((s) => s.babies)
+  const addBaby = useBabyStore((s) => s.addBaby)
+  const deleteBaby = useBabyStore((s) => s.deleteBaby)
+
   const getDefaults = useDefaultsStore((s) => s.getDefaults)
   const setSolidFoodDefaults = useDefaultsStore((s) => s.setSolidFoodDefaults)
   const setDrinkDefaults = useDefaultsStore((s) => s.setDrinkDefaults)
@@ -59,6 +71,12 @@ const SettingsPage = () => {
   const [isLastMember, setIsLastMember] = useState(false)
   const [newSupplementName, setNewSupplementName] = useState('')
   const [addingSupplement, setAddingSupplement] = useState(false)
+  const [newBabyName, setNewBabyName] = useState('')
+  const [newBabyBirthdate, setNewBabyBirthdate] = useState('')
+  const [addingBaby, setAddingBaby] = useState(false)
+  const [showDeleteBabyDialog, setShowDeleteBabyDialog] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportDone, setExportDone] = useState(false)
   const [savedSection, setSavedSection] = useState<string | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
 
@@ -132,6 +150,36 @@ const SettingsPage = () => {
     setShowLeaveDialog(false)
     await leave()
     navigate('/join', { replace: true })
+  }
+
+  const handleAddBaby = async () => {
+    const trimmedName = newBabyName.trim()
+    if (!trimmedName || !newBabyBirthdate || !familyId) return
+    setAddingBaby(true)
+    try {
+      await addBaby(familyId, trimmedName, newBabyBirthdate)
+      setNewBabyName('')
+      setNewBabyBirthdate('')
+    } finally {
+      setAddingBaby(false)
+    }
+  }
+
+  const handleDeleteBaby = async (id: string) => {
+    setShowDeleteBabyDialog(null)
+    await deleteBaby(id)
+  }
+
+  const handleExportCSV = async () => {
+    if (!familyId) return
+    setExporting(true)
+    try {
+      await exportActivitiesCSV(familyId)
+      setExportDone(true)
+      setTimeout(() => setExportDone(false), 2000)
+    } finally {
+      setExporting(false)
+    }
   }
 
   // Save defaults handlers
@@ -238,6 +286,98 @@ const SettingsPage = () => {
             <p className="text-xs text-muted-foreground leading-relaxed">
               다른 가족이 이 방에 참여할 때 필요한 비밀번호입니다.
             </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Baby Profile */}
+      <Card>
+        <CardContent className="flex flex-col gap-3 px-4 py-4">
+          <div className="flex items-center gap-2">
+            <div className="rounded-full bg-pink-100 p-1.5">
+              <Baby className="h-3.5 w-3.5 text-pink-700" strokeWidth={2} />
+            </div>
+            <Label className="text-sm font-semibold">아기 프로필</Label>
+          </div>
+
+          {babies.length > 0 ? (
+            <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
+              <div className="flex-1">
+                <span className="text-sm font-medium">{babies[0].name}</span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  {formatBabyAge(babies[0].birthdate)}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 cursor-pointer text-muted-foreground hover:text-destructive"
+                onClick={() => setShowDeleteBabyDialog(babies[0].id)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <p className="text-center text-xs text-muted-foreground">
+                등록된 아기가 없습니다
+              </p>
+              <Separator />
+              <div className="flex flex-col gap-2">
+                <Input
+                  value={newBabyName}
+                  onChange={(e) => setNewBabyName(e.target.value)}
+                  placeholder="아기 이름"
+                  className="h-10 text-sm"
+                />
+                <div className="flex gap-2">
+                  <Input
+                    type="date"
+                    value={newBabyBirthdate}
+                    onChange={(e) => setNewBabyBirthdate(e.target.value)}
+                    className="h-10 text-sm"
+                  />
+                  <Button
+                    variant="outline"
+                    className="h-10 min-w-[56px] cursor-pointer gap-1 text-xs"
+                    onClick={handleAddBaby}
+                    disabled={addingBaby || !newBabyName.trim() || !newBabyBirthdate}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    추가
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Theme */}
+      <Card>
+        <CardContent className="flex flex-col gap-3 px-4 py-4">
+          <Label className="text-xs text-muted-foreground">테마</Label>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { value: 'light' as const, label: '라이트', icon: Sun },
+              { value: 'dark' as const, label: '다크', icon: Moon },
+              { value: 'system' as const, label: '시스템', icon: Monitor },
+            ]).map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                className={cn(
+                  'flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-lg border-2 text-sm font-semibold transition-all',
+                  theme === value
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background text-foreground',
+                )}
+                onClick={() => setTheme(value)}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -469,6 +609,49 @@ const SettingsPage = () => {
         </CardContent>
       </Card>
 
+      {/* Data Export */}
+      <Card>
+        <CardContent className="flex flex-col gap-3 px-4 py-4">
+          <div className="flex items-center gap-2">
+            <div className="rounded-full bg-blue-100 p-1.5">
+              <Download className="h-3.5 w-3.5 text-blue-700" strokeWidth={2} />
+            </div>
+            <Label className="text-sm font-semibold">데이터 내보내기</Label>
+          </div>
+          <Button
+            variant="outline"
+            className={cn(
+              'h-10 cursor-pointer text-sm gap-1.5',
+              exportDone && 'border-green-400 bg-green-50 text-green-700',
+            )}
+            onClick={handleExportCSV}
+            disabled={exporting}
+          >
+            {exporting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                내보내는 중...
+              </>
+            ) : exportDone ? (
+              <>
+                <Check className="h-4 w-4" />
+                다운로드 완료
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                CSV 다운로드
+              </>
+            )}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            가족방의 전체 활동 기록을 CSV 파일로 다운로드합니다.
+          </p>
+        </CardContent>
+      </Card>
+
+      <InstallPrompt />
+
       <Button
         variant="outline"
         className="h-12 cursor-pointer text-base"
@@ -476,6 +659,26 @@ const SettingsPage = () => {
       >
         가족방 나가기
       </Button>
+
+      <AlertDialog open={showDeleteBabyDialog !== null} onOpenChange={(open) => { if (!open) setShowDeleteBabyDialog(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>아기 프로필을 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription>
+              이 아기 프로필이 삭제됩니다. 활동 기록은 유지됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="cursor-pointer">취소</AlertDialogCancel>
+            <AlertDialogAction
+              className="cursor-pointer bg-destructive text-white hover:bg-destructive/90"
+              onClick={() => showDeleteBabyDialog && handleDeleteBaby(showDeleteBabyDialog)}
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
         <AlertDialogContent>
