@@ -33,7 +33,12 @@ const InstallPrompt = () => {
 
     // iOS: beforeinstallprompt 미지원, 수동 안내 표시
     if (isIOS()) {
-      const hiddenUntil = localStorage.getItem('baby-memo-install-dismissed')
+      let hiddenUntil: string | null = null
+      try {
+        hiddenUntil = localStorage.getItem('baby-memo-install-dismissed')
+      } catch {
+        // Safari 프라이빗 모드 등에서 QuotaExceededError 방지
+      }
       if (!hiddenUntil || Date.now() > Number(hiddenUntil)) {
         setShowIOSGuide(true)
       }
@@ -45,17 +50,19 @@ const InstallPrompt = () => {
   const handleInstall = async () => {
     if (!deferredPrompt) return
     await deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null)
-    }
+    await deferredPrompt.userChoice
+    setDeferredPrompt(null)
   }
 
   const handleDismissIOS = () => {
     setShowIOSGuide(false)
     setDismissed(true)
     // 7일간 숨김
-    localStorage.setItem('baby-memo-install-dismissed', String(Date.now() + 7 * 24 * 60 * 60 * 1000))
+    try {
+      localStorage.setItem('baby-memo-install-dismissed', String(Date.now() + 7 * 24 * 60 * 60 * 1000))
+    } catch {
+      // Safari 프라이빗 모드 등에서 QuotaExceededError 방지
+    }
   }
 
   // 이미 앱으로 실행 중이면 숨김
