@@ -19,7 +19,6 @@ const isStandalone = () =>
 const InstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showIOSGuide, setShowIOSGuide] = useState(false)
-  const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
     if (isStandalone()) return
@@ -56,7 +55,6 @@ const InstallPrompt = () => {
 
   const handleDismissIOS = () => {
     setShowIOSGuide(false)
-    setDismissed(true)
     // 7일간 숨김
     try {
       localStorage.setItem('baby-memo-install-dismissed', String(Date.now() + 7 * 24 * 60 * 60 * 1000))
@@ -83,7 +81,7 @@ const InstallPrompt = () => {
   }
 
   // iOS: 수동 안내
-  if (showIOSGuide && !dismissed) {
+  if (showIOSGuide) {
     return (
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="relative flex flex-col gap-2 px-4 py-4">
