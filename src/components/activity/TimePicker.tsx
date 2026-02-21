@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
@@ -23,7 +24,11 @@ export const roundToNearest5 = (date: Date): Date => {
   return rounded
 }
 
+const HOURS_12 = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
 const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
+  const [editing, setEditing] = useState(false)
+
   const adjust = (minutes: number) => {
     const next = new Date(value.getTime() + minutes * 60000)
     if (next <= new Date()) {
@@ -32,6 +37,22 @@ const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
   }
 
   const isFuture = (minutes: number) => value.getTime() + minutes * 60000 > Date.now()
+
+  const hours24 = value.getHours()
+  const isPM = hours24 >= 12
+  const hour12 = hours24 % 12 || 12
+  const minute = value.getMinutes()
+
+  const tryChange = (ampm: 'AM' | 'PM', h12: number, min: number) => {
+    const next = new Date(value)
+    const h24 = ampm === 'PM'
+      ? (h12 === 12 ? 12 : h12 + 12)
+      : (h12 === 12 ? 0 : h12)
+    next.setHours(h24, min, 0, 0)
+    onChange(next)
+  }
+
+  const ampmValue = isPM ? 'PM' : 'AM'
 
   return (
     <div className="flex flex-col items-center gap-1.5 rounded-xl bg-muted/50 py-3">
@@ -45,9 +66,54 @@ const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
         >
           -5
         </Button>
-        <span className="min-w-[120px] text-center text-xl font-bold tabular-nums">
-          {format(value, 'a h:mm', { locale: ko })}
-        </span>
+
+        {editing ? (
+          <div className="flex items-center justify-center gap-1 min-w-[120px]">
+            <select
+              className="h-8 rounded-md border bg-background px-1 text-sm font-semibold cursor-pointer"
+              value={ampmValue}
+              onChange={(e) => tryChange(e.target.value as 'AM' | 'PM', hour12, minute)}
+            >
+              <option value="AM">오전</option>
+              <option value="PM">오후</option>
+            </select>
+            <select
+              className="h-8 rounded-md border bg-background px-1 text-base font-bold cursor-pointer tabular-nums"
+              value={hour12}
+              onChange={(e) => tryChange(ampmValue, Number(e.target.value), minute)}
+            >
+              {HOURS_12.map((h) => (
+                <option key={h} value={h}>{h}</option>
+              ))}
+            </select>
+            <span className="text-base font-bold">:</span>
+            <select
+              className="h-8 rounded-md border bg-background px-1 text-base font-bold cursor-pointer tabular-nums"
+              value={minute}
+              onChange={(e) => tryChange(ampmValue, hour12, Number(e.target.value))}
+            >
+              {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
+                <option key={m} value={m}>{String(m).padStart(2, '0')}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="ml-1 rounded-md px-2 py-1 text-xs font-medium text-primary hover:bg-muted transition-colors"
+              onClick={() => setEditing(false)}
+            >
+              확인
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="min-w-[120px] text-center text-xl font-bold tabular-nums cursor-pointer rounded-lg py-1 hover:bg-muted/80 transition-colors"
+            onClick={() => setEditing(true)}
+          >
+            {format(value, 'a h:mm', { locale: ko })}
+          </button>
+        )}
+
         <Button
           type="button"
           variant="outline"

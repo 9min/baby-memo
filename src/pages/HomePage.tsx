@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight, Check } from 'lucide-react'
 import { useFamilyStore } from '@/stores/familyStore'
@@ -28,6 +28,11 @@ const HomePage = () => {
   const activities = useActivityStore((s) => s.activities)
   const recordActivity = useActivityStore((s) => s.recordActivity)
   const updateActivity = useActivityStore((s) => s.updateActivity)
+  const setSelectedDate = useActivityStore((s) => s.setSelectedDate)
+
+  useEffect(() => {
+    setSelectedDate(new Date())
+  }, [setSelectedDate])
 
   const [solidFoodOpen, setSolidFoodOpen] = useState(false)
   const [drinkOpen, setDrinkOpen] = useState(false)
