@@ -24,13 +24,13 @@ describe('ActivityButton', () => {
   it('applies bgColor from config', () => {
     render(<ActivityButton config={solidFoodConfig} onClick={() => {}} />)
     const button = screen.getByRole('button')
-    expect(button.className).toContain('bg-amber-100')
+    expect(button.className).toContain('bg-amber-50')
   })
 
   it('applies textColor from config', () => {
     render(<ActivityButton config={solidFoodConfig} onClick={() => {}} />)
     const button = screen.getByRole('button')
-    expect(button.className).toContain('text-amber-700')
+    expect(button.className).toContain('text-amber-600')
   })
 
   it('renders different labels for different activity types', () => {

@@ -69,21 +69,24 @@ const ActivityCard = ({ activity, showDelete = true, onEdit }: ActivityCardProps
 
   return (
     <Card
-      className={cn('py-3 transition-colors', onEdit && 'cursor-pointer active:bg-muted/50')}
+      className={cn(
+        'py-3 transition-all duration-200',
+        onEdit && 'cursor-pointer hover:shadow-sm active:bg-muted/50',
+      )}
       onClick={() => onEdit?.(activity)}
     >
       <CardContent className="flex items-center gap-3 px-4">
-        <div className={cn('shrink-0 rounded-full p-2.5', config.bgColor)}>
+        <div className={cn('shrink-0 rounded-xl p-2.5', config.bgColor)}>
           <Icon className={cn('h-5 w-5', config.textColor)} strokeWidth={2} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="shrink-0 font-semibold text-sm whitespace-nowrap">{config.label}</span>
+            <span className="shrink-0 font-bold text-sm whitespace-nowrap">{config.label}</span>
             <span className="text-xs text-muted-foreground bg-secondary rounded-md px-2 py-0.5 break-all">
               {detail}
             </span>
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
             <span>{timeStr}</span>
             {activity.memo && (
               <>

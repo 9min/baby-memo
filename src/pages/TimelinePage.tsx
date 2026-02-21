@@ -177,8 +177,8 @@ const TimelinePage = () => {
           ))}
         </div>
       ) : groups.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-primary/20 bg-primary/[0.02] py-16 text-center">
+          <p className="text-sm font-medium text-muted-foreground">
             이 날짜에 기록된 활동이 없습니다
           </p>
         </div>

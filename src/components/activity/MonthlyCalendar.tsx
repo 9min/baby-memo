@@ -41,7 +41,7 @@ const MonthlyCalendar = ({
     currentMonth.getMonth() === today.getMonth()
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       {/* Header */}
       <div className="flex items-center justify-between rounded-xl bg-muted/50 px-1 py-1">
         <Button
@@ -54,7 +54,7 @@ const MonthlyCalendar = ({
           <ChevronLeft className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">
+          <span className="text-sm font-bold">
             {format(currentMonth, 'yyyy년 M월', { locale: ko })}
           </span>
           {!isCurrentMonth && (
@@ -82,10 +82,13 @@ const MonthlyCalendar = ({
 
       {/* Weekday headers */}
       <div className="grid grid-cols-7 text-center">
-        {WEEKDAYS.map((day) => (
+        {WEEKDAYS.map((day, i) => (
           <div
             key={day}
-            className="py-1 text-xs font-medium text-muted-foreground"
+            className={cn(
+              'py-2 text-xs font-bold',
+              i === 0 ? 'text-rose-400' : i === 6 ? 'text-blue-400' : 'text-muted-foreground',
+            )}
           >
             {day}
           </div>
@@ -93,7 +96,7 @@ const MonthlyCalendar = ({
       </div>
 
       {/* Day grid */}
-      <div className="grid grid-cols-7 gap-y-1">
+      <div className="grid grid-cols-7 gap-y-0.5">
         {/* Empty cells before month start */}
         {Array.from({ length: startDayOfWeek }).map((_, i) => (
           <div key={`empty-${i}`} />
@@ -104,6 +107,7 @@ const MonthlyCalendar = ({
           const count = activityDates[dateKey] ?? 0
           const todayDate = isToday(day)
           const futureDate = isFuture(day) && !isSameDay(day, new Date())
+          const dayOfWeek = getDay(day)
 
           return (
             <button
@@ -112,16 +116,21 @@ const MonthlyCalendar = ({
               disabled={futureDate}
               onClick={() => onDateSelect(day)}
               className={cn(
-                'relative mx-auto flex h-10 w-10 flex-col items-center justify-center rounded-full text-sm transition-colors',
-                'hover:bg-accent hover:text-accent-foreground',
+                'relative mx-auto flex h-11 w-11 cursor-pointer flex-col items-center justify-center rounded-xl text-sm font-medium transition-all duration-150',
+                'hover:bg-primary/10',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                todayDate && 'ring-2 ring-primary',
-                futureDate && 'cursor-default text-muted-foreground/40',
+                todayDate && 'bg-primary text-primary-foreground font-bold shadow-sm hover:bg-primary/90',
+                futureDate && 'cursor-default text-muted-foreground/30 hover:bg-transparent',
+                !todayDate && !futureDate && dayOfWeek === 0 && 'text-rose-500 dark:text-rose-400',
+                !todayDate && !futureDate && dayOfWeek === 6 && 'text-blue-500 dark:text-blue-400',
               )}
             >
               {day.getDate()}
-              {count > 0 && (
-                <span className="absolute bottom-0.5 h-1 w-1 rounded-full bg-primary" />
+              {count > 0 && !todayDate && (
+                <span className="absolute bottom-1 h-1 w-1 rounded-full bg-primary" />
+              )}
+              {count > 0 && todayDate && (
+                <span className="absolute bottom-1 h-1 w-1 rounded-full bg-primary-foreground" />
               )}
             </button>
           )

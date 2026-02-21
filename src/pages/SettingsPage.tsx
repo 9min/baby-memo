@@ -222,7 +222,7 @@ const SettingsPage = () => {
 
   return (
     <div className="flex flex-col gap-6 py-4">
-      <h2 className="text-lg font-bold">설정</h2>
+      <h2 className="text-lg font-extrabold">설정</h2>
 
       {/* Family Code & Nickname */}
       <Card>
@@ -294,7 +294,7 @@ const SettingsPage = () => {
       <Card>
         <CardContent className="flex flex-col gap-3 px-4 py-4">
           <div className="flex items-center gap-2">
-            <div className="rounded-full bg-pink-100 p-1.5">
+            <div className="rounded-full bg-pink-50 p-1.5 dark:bg-pink-950/40">
               <Baby className="h-3.5 w-3.5 text-pink-700" strokeWidth={2} />
             </div>
             <Label className="text-sm font-semibold">아기 프로필</Label>
@@ -383,13 +383,13 @@ const SettingsPage = () => {
       </Card>
 
       {/* Activity Defaults */}
-      <h3 className="text-sm font-semibold text-muted-foreground">기본값 설정</h3>
+      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">기본값 설정</h3>
 
       {/* Solid Food Default */}
       <Card>
         <CardContent className="flex flex-col gap-3 px-4 py-4">
           <div className="flex items-center gap-2">
-            <div className="rounded-full bg-amber-100 p-1.5">
+            <div className="rounded-full bg-amber-50 p-1.5 dark:bg-amber-950/40">
               <UtensilsCrossed className="h-3.5 w-3.5 text-amber-700" strokeWidth={2} />
             </div>
             <Label className="text-sm font-semibold">먹어요</Label>
@@ -420,7 +420,7 @@ const SettingsPage = () => {
       <Card>
         <CardContent className="flex flex-col gap-3 px-4 py-4">
           <div className="flex items-center gap-2">
-            <div className="rounded-full bg-sky-100 p-1.5">
+            <div className="rounded-full bg-sky-50 p-1.5 dark:bg-sky-950/40">
               <GlassWater className="h-3.5 w-3.5 text-sky-700" strokeWidth={2} />
             </div>
             <Label className="text-sm font-semibold">마셔요</Label>
@@ -472,7 +472,7 @@ const SettingsPage = () => {
       <Card>
         <CardContent className="flex flex-col gap-3 px-4 py-4">
           <div className="flex items-center gap-2">
-            <div className="rounded-full bg-violet-100 p-1.5">
+            <div className="rounded-full bg-violet-50 p-1.5 dark:bg-violet-950/40">
               <Pill className="h-3.5 w-3.5 text-violet-700" strokeWidth={2} />
             </div>
             <Label className="text-sm font-semibold">영양제</Label>
@@ -554,7 +554,7 @@ const SettingsPage = () => {
       <Card>
         <CardContent className="flex flex-col gap-3 px-4 py-4">
           <div className="flex items-center gap-2">
-            <div className="rounded-full bg-emerald-100 p-1.5">
+            <div className="rounded-full bg-emerald-50 p-1.5 dark:bg-emerald-950/40">
               <Droplets className="h-3.5 w-3.5 text-emerald-700" strokeWidth={2} />
             </div>
             <Label className="text-sm font-semibold">기저귀</Label>
@@ -613,7 +613,7 @@ const SettingsPage = () => {
       <Card>
         <CardContent className="flex flex-col gap-3 px-4 py-4">
           <div className="flex items-center gap-2">
-            <div className="rounded-full bg-blue-100 p-1.5">
+            <div className="rounded-full bg-blue-50 p-1.5 dark:bg-blue-950/40">
               <Download className="h-3.5 w-3.5 text-blue-700" strokeWidth={2} />
             </div>
             <Label className="text-sm font-semibold">데이터 내보내기</Label>

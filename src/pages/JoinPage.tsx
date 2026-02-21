@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Baby } from 'lucide-react'
 import { useFamilyStore } from '@/stores/familyStore'
 import { APP_NAME, MIN_CODE_LENGTH, MAX_CODE_LENGTH } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
@@ -94,9 +95,12 @@ const JoinPage = () => {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-6">
         <div className="w-full max-w-sm flex flex-col items-center gap-8">
-          <div className="text-center">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+              <Baby className="h-8 w-8 text-primary" />
+            </div>
             <h1 className="text-3xl font-bold tracking-tight">{APP_NAME}</h1>
-            <p className="mt-2 text-base text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               기존 가족방에 참여합니다
             </p>
           </div>
@@ -154,10 +158,13 @@ const JoinPage = () => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm flex flex-col items-center gap-8">
-        <div className="text-center">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+            <Baby className="h-8 w-8 text-primary" />
+          </div>
           <h1 className="text-3xl font-bold tracking-tight">{APP_NAME}</h1>
-          <p className="mt-2 text-base text-muted-foreground">
-            아기 활동을 간편하게 기록하세요
+          <p className="text-base text-muted-foreground">
+            아기 활동을 가족과 함께 기록해요
           </p>
         </div>
 

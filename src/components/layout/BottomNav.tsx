@@ -18,8 +18,8 @@ const navItems: NavItem[] = [
 
 const BottomNav = () => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-16 max-w-lg items-center justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -27,9 +27,9 @@ const BottomNav = () => {
             end={item.to === '/'}
             className={({ isActive }) =>
               cn(
-                'flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-xl px-4 py-1.5 text-xs transition-colors',
+                'flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-xl px-4 py-1.5 text-xs transition-all duration-200',
                 isActive
-                  ? 'text-primary font-semibold'
+                  ? 'bg-primary/10 text-primary font-bold'
                   : 'text-muted-foreground active:text-foreground',
               )
             }
@@ -37,7 +37,7 @@ const BottomNav = () => {
             {({ isActive }) => (
               <>
                 <item.icon
-                  className={cn('h-5 w-5', isActive && 'stroke-[2.5]')}
+                  className={cn('h-5 w-5 transition-all', isActive && 'stroke-[2.5]')}
                 />
                 <span>{item.label}</span>
               </>
