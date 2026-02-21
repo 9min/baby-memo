@@ -51,7 +51,7 @@ src/
   types/             # database.ts (Family, Device, Activity, Baby, SupplementPreset)
                      # stats.ts (StatsPeriod, DateRange, DailyActivityCount 등)
 supabase/
-  migrations/        # SQL 마이그레이션 (00001~00007)
+  migrations/        # SQL 마이그레이션 (00001~00009)
 docs/                # PRD, 아키텍처, 개발 플로우, Git 워크플로우
 .github/
   workflows/         # CI 워크플로우 (ci.yml)

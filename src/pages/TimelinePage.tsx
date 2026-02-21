@@ -258,7 +258,7 @@ const TimelinePage = () => {
               </div>
               <div className="flex flex-col gap-2">
                 {group.activities.map((activity) => (
-                  <ActivityCard key={activity.id} activity={activity} onEdit={handleEdit} deviceNickname={deviceMap[activity.device_id]} />
+                  <ActivityCard key={activity.id} activity={activity} onEdit={handleEdit} deviceNickname={activity.device_id ? deviceMap[activity.device_id] : undefined} />
                 ))}
               </div>
             </div>

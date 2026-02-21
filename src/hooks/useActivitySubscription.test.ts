@@ -67,4 +67,41 @@ describe('useActivitySubscription', () => {
     unmount()
     expect(unsubscribeSpy).toHaveBeenCalled()
   })
+
+  it('subscribes to devices when familyId is present', () => {
+    const subscribeDevicesSpy = vi.fn()
+    useFamilyStore.setState({
+      familyId: 'fam-1',
+      subscribeDevices: subscribeDevicesSpy,
+      unsubscribeDevices: vi.fn(),
+    })
+
+    renderHook(() => useActivitySubscription())
+    expect(subscribeDevicesSpy).toHaveBeenCalledWith('fam-1')
+  })
+
+  it('does not subscribe to devices when no familyId', () => {
+    const subscribeDevicesSpy = vi.fn()
+    useFamilyStore.setState({
+      familyId: null,
+      subscribeDevices: subscribeDevicesSpy,
+      unsubscribeDevices: vi.fn(),
+    })
+
+    renderHook(() => useActivitySubscription())
+    expect(subscribeDevicesSpy).not.toHaveBeenCalled()
+  })
+
+  it('unsubscribes devices on unmount', () => {
+    const unsubscribeDevicesSpy = vi.fn()
+    useFamilyStore.setState({
+      familyId: 'fam-1',
+      subscribeDevices: vi.fn(),
+      unsubscribeDevices: unsubscribeDevicesSpy,
+    })
+
+    const { unmount } = renderHook(() => useActivitySubscription())
+    unmount()
+    expect(unsubscribeDevicesSpy).toHaveBeenCalled()
+  })
 })

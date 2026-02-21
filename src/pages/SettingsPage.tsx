@@ -48,6 +48,7 @@ const SettingsPage = () => {
   const setNickname = useFamilyStore((s) => s.setNickname)
   const members = useFamilyStore((s) => s.members)
   const fetchMembers = useFamilyStore((s) => s.fetchMembers)
+  const kickMember = useFamilyStore((s) => s.kickMember)
   const navigate = useNavigate()
 
   const presets = useSupplementStore((s) => s.presets)
@@ -89,6 +90,7 @@ const SettingsPage = () => {
   const [newBabyBirthdate, setNewBabyBirthdate] = useState('')
   const [addingBaby, setAddingBaby] = useState(false)
   const [showDeleteBabyDialog, setShowDeleteBabyDialog] = useState<string | null>(null)
+  const [kickTargetId, setKickTargetId] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
   const [exportDone, setExportDone] = useState(false)
   const [savedSection, setSavedSection] = useState<string | null>(null)
@@ -241,6 +243,17 @@ const SettingsPage = () => {
     )
   }
 
+  const isRoomOwner = members.length > 0 && members[0].device_id === deviceId
+
+  const handleKickMember = async (targetDeviceId: string) => {
+    setKickTargetId(null)
+    try {
+      await kickMember(targetDeviceId)
+    } catch (error) {
+      console.error('Failed to kick member:', error)
+    }
+  }
+
   const isSolidFoodChanged = defaultFoodName.trim() !== defaults.solidFood.food_name
   const isDrinkChanged = defaultDrinkType !== defaults.drink.drink_type || defaultAmountMl.trim() !== defaults.drink.amount_ml
   const isSupplementChanged = JSON.stringify(defaultSupplementNames.sort()) !== JSON.stringify([...defaults.supplement.supplement_names].sort())
@@ -353,7 +366,7 @@ const SettingsPage = () => {
           </div>
           {members.length > 0 ? (
             <div className="flex flex-col gap-2">
-              {members.map((member) => (
+              {members.map((member, index) => (
                 <div
                   key={member.id}
                   className="flex items-center gap-2 rounded-lg border px-3 py-2"
@@ -363,6 +376,9 @@ const SettingsPage = () => {
                       <span className="text-sm font-medium truncate">
                         {member.nickname ?? '이름 없음'}
                       </span>
+                      {index === 0 && (
+                        <Badge variant="default" className="text-[10px] px-1.5 py-0">방장</Badge>
+                      )}
                       {member.device_id === deviceId && (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0">나</Badge>
                       )}
@@ -371,6 +387,17 @@ const SettingsPage = () => {
                       {format(new Date(member.created_at), 'yyyy.MM.dd 참여', { locale: ko })}
                     </p>
                   </div>
+                  {isRoomOwner && member.device_id !== deviceId && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 cursor-pointer text-muted-foreground hover:text-destructive"
+                      onClick={() => setKickTargetId(member.device_id)}
+                      aria-label={`${member.nickname ?? '구성원'} 내보내기`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -767,6 +794,26 @@ const SettingsPage = () => {
               onClick={() => showDeleteBabyDialog && handleDeleteBaby(showDeleteBabyDialog)}
             >
               삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={kickTargetId !== null} onOpenChange={(open) => { if (!open) setKickTargetId(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>구성원을 내보내시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription>
+              해당 구성원을 가족방에서 내보냅니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="cursor-pointer">취소</AlertDialogCancel>
+            <AlertDialogAction
+              className="cursor-pointer bg-destructive text-white hover:bg-destructive/90"
+              onClick={() => kickTargetId && handleKickMember(kickTargetId)}
+            >
+              내보내기
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

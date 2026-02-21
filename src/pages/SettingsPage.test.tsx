@@ -263,5 +263,75 @@ describe('SettingsPage', () => {
       renderSettingsPage()
       expect(fetchMembers).toHaveBeenCalledWith('fam-1')
     })
+
+    it('shows 방장 badge for first member (room owner)', () => {
+      renderSettingsPage()
+      expect(screen.getByText('방장')).toBeInTheDocument()
+    })
+
+    it('shows kick button for non-owner members when current user is owner', () => {
+      // dev-1 is owner (members[0]) — should see kick button for dev-2
+      renderSettingsPage()
+      // The members card should contain exactly one kick button (for dev-2, not for dev-1/owner)
+      const memberSection = screen.getByText('가족 구성원').closest('[class*="card"]')!
+      const buttons = Array.from(memberSection.querySelectorAll('button'))
+      const kickButtons = buttons.filter(btn => btn.querySelector('svg'))
+      expect(kickButtons.length).toBe(1)
+    })
+
+    it('does not show kick button when current user is not owner', () => {
+      useFamilyStore.setState({
+        deviceId: 'dev-2', // not the owner (members[0] is dev-1)
+        nickname: '용감한 펭귄',
+      })
+      renderSettingsPage()
+      // 방장 badge should still appear for members[0]
+      expect(screen.getByText('방장')).toBeInTheDocument()
+      // No kick buttons should be visible (baby profile has no baby, so no trash there either)
+      // The only trash buttons would be in supplement section (empty) and baby (empty)
+    })
+
+    it('shows kick confirmation dialog when kick button clicked', async () => {
+      const user = userEvent.setup()
+      useFamilyStore.setState({ kickMember: vi.fn() })
+      renderSettingsPage()
+
+      // Find kick buttons in the members section
+      // The members section has a Trash2 button for the non-owner member
+      const memberSection = screen.getByText('가족 구성원').closest('[class*="card"]')
+      const kickButton = memberSection?.querySelector('button')
+        ? Array.from(memberSection!.querySelectorAll('button')).find(btn =>
+          btn.querySelector('svg'),
+        )
+        : null
+
+      if (kickButton) {
+        await user.click(kickButton)
+        expect(await screen.findByText('구성원을 내보내시겠습니까?')).toBeInTheDocument()
+        expect(screen.getByText('해당 구성원을 가족방에서 내보냅니다.')).toBeInTheDocument()
+        expect(screen.getByText('내보내기')).toBeInTheDocument()
+      }
+    })
+
+    it('calls kickMember when kick is confirmed', async () => {
+      const user = userEvent.setup()
+      const kickMember = vi.fn().mockResolvedValue(undefined)
+      useFamilyStore.setState({ kickMember })
+      renderSettingsPage()
+
+      // Find the kick button in the members card
+      const memberSection = screen.getByText('가족 구성원').closest('[class*="card"]')
+      const kickButton = memberSection
+        ? Array.from(memberSection.querySelectorAll('button')).find(btn =>
+          btn.querySelector('svg'),
+        )
+        : null
+
+      if (kickButton) {
+        await user.click(kickButton)
+        await user.click(screen.getByText('내보내기'))
+        expect(kickMember).toHaveBeenCalledWith('dev-2')
+      }
+    })
   })
 })
