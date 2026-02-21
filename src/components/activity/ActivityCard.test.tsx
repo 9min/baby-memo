@@ -130,4 +130,18 @@ describe('ActivityCard', () => {
     await user.click(screen.getByLabelText('삭제'))
     expect(onEdit).not.toHaveBeenCalled()
   })
+
+  it('displays deviceNickname when provided', () => {
+    const activity = createMockActivity({ recorded_at: '2025-01-15T10:30:00' })
+    render(<ActivityCard activity={activity} deviceNickname="귀여운 토끼" />)
+    expect(screen.getByText('귀여운 토끼')).toBeInTheDocument()
+  })
+
+  it('does not display nickname separator when deviceNickname is not provided', () => {
+    const activity = createMockActivity({ recorded_at: '2025-01-15T10:30:00', memo: null })
+    render(<ActivityCard activity={activity} />)
+    // Should only have time, no separator dots
+    expect(screen.getByText('10:30')).toBeInTheDocument()
+    expect(screen.queryByText('·')).not.toBeInTheDocument()
+  })
 })

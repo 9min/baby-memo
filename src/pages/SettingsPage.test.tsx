@@ -28,9 +28,16 @@ describe('SettingsPage', () => {
       familyCode: 'TESTFAM',
       familyPassword: '1234',
       deviceId: 'dev-1',
+      nickname: '귀여운 토끼',
+      members: [
+        { id: '1', device_id: 'dev-1', family_id: 'fam-1', nickname: '귀여운 토끼', created_at: '2025-01-15T00:00:00', updated_at: '2025-01-15T00:00:00' },
+        { id: '2', device_id: 'dev-2', family_id: 'fam-1', nickname: '용감한 펭귄', created_at: '2025-01-16T00:00:00', updated_at: '2025-01-16T00:00:00' },
+      ],
       updatePassword: vi.fn(),
       getDeviceCount: vi.fn().mockResolvedValue(1),
       leave: vi.fn(),
+      setNickname: vi.fn(),
+      fetchMembers: vi.fn(),
     })
     useSupplementStore.setState({
       presets: [],
@@ -177,5 +184,84 @@ describe('SettingsPage', () => {
     await user.click(addButtons[1])
 
     expect(addPreset).toHaveBeenCalledWith('fam-1', '오메가3')
+  })
+
+  describe('nickname', () => {
+    it('shows current nickname in input', () => {
+      renderSettingsPage()
+      expect(screen.getByDisplayValue('귀여운 토끼')).toBeInTheDocument()
+    })
+
+    it('shows 내 닉네임 label', () => {
+      renderSettingsPage()
+      expect(screen.getByText('내 닉네임')).toBeInTheDocument()
+    })
+
+    it('nickname save button is disabled when unchanged', () => {
+      renderSettingsPage()
+      // Find the nickname save button (it has id="nickname" input nearby)
+      const nicknameInput = screen.getByDisplayValue('귀여운 토끼')
+      const saveBtn = nicknameInput.parentElement?.querySelector('button')
+      expect(saveBtn).toBeDisabled()
+    })
+
+    it('nickname save button is enabled when changed', async () => {
+      const user = userEvent.setup()
+      renderSettingsPage()
+
+      const nicknameInput = screen.getByDisplayValue('귀여운 토끼')
+      await user.clear(nicknameInput)
+      await user.type(nicknameInput, '용감한 판다')
+
+      const saveBtn = nicknameInput.parentElement?.querySelector('button')
+      expect(saveBtn).not.toBeDisabled()
+    })
+
+    it('calls setNickname when save is clicked', async () => {
+      const user = userEvent.setup()
+      const setNickname = vi.fn().mockResolvedValue(undefined)
+      useFamilyStore.setState({ setNickname })
+      renderSettingsPage()
+
+      const nicknameInput = screen.getByDisplayValue('귀여운 토끼')
+      await user.clear(nicknameInput)
+      await user.type(nicknameInput, '용감한 판다')
+
+      const saveBtn = nicknameInput.parentElement?.querySelector('button')
+      if (saveBtn) await user.click(saveBtn)
+
+      expect(setNickname).toHaveBeenCalledWith('용감한 판다')
+    })
+  })
+
+  describe('family members', () => {
+    it('shows 가족 구성원 heading', () => {
+      renderSettingsPage()
+      expect(screen.getByText('가족 구성원')).toBeInTheDocument()
+    })
+
+    it('shows member count', () => {
+      renderSettingsPage()
+      expect(screen.getByText('(2명)')).toBeInTheDocument()
+    })
+
+    it('shows member nicknames', () => {
+      renderSettingsPage()
+      // Both members' nicknames should be visible
+      // '귀여운 토끼' appears in both nickname input and members list, so just check for the second member
+      expect(screen.getByText('용감한 펭귄')).toBeInTheDocument()
+    })
+
+    it('shows (나) badge for current device', () => {
+      renderSettingsPage()
+      expect(screen.getByText('나')).toBeInTheDocument()
+    })
+
+    it('calls fetchMembers on mount', () => {
+      const fetchMembers = vi.fn()
+      useFamilyStore.setState({ fetchMembers })
+      renderSettingsPage()
+      expect(fetchMembers).toHaveBeenCalledWith('fam-1')
+    })
   })
 })

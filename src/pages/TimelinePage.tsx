@@ -28,6 +28,7 @@ type ViewMode = 'day' | 'month'
 const TimelinePage = () => {
   const familyId = useFamilyStore((s) => s.familyId)
   const deviceId = useFamilyStore((s) => s.deviceId)
+  const members = useFamilyStore((s) => s.members)
   const activities = useActivityStore((s) => s.activities)
   const selectedDate = useActivityStore((s) => s.selectedDate)
   const setSelectedDate = useActivityStore((s) => s.setSelectedDate)
@@ -65,6 +66,14 @@ const TimelinePage = () => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     }
   }, [])
+
+  const deviceMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const m of members) {
+      if (m.nickname) map[m.device_id] = m.nickname
+    }
+    return map
+  }, [members])
 
   const groups = useMemo(
     () => groupByTimeOfDay(activities),
@@ -249,7 +258,7 @@ const TimelinePage = () => {
               </div>
               <div className="flex flex-col gap-2">
                 {group.activities.map((activity) => (
-                  <ActivityCard key={activity.id} activity={activity} onEdit={handleEdit} />
+                  <ActivityCard key={activity.id} activity={activity} onEdit={handleEdit} deviceNickname={deviceMap[activity.device_id]} />
                 ))}
               </div>
             </div>

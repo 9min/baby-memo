@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2 } from 'lucide-react'
+import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2, Users } from 'lucide-react'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
 import { formatBabyAge } from '@/lib/babyUtils'
 import { useFamilyStore } from '@/stores/familyStore'
 import { useSupplementStore } from '@/stores/supplementStore'
@@ -26,6 +28,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import InstallPrompt from '@/components/layout/InstallPrompt'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { DrinkType, DiaperType, DiaperAmount } from '@/types/database'
 
@@ -40,6 +43,11 @@ const SettingsPage = () => {
   const updatePassword = useFamilyStore((s) => s.updatePassword)
   const getDeviceCount = useFamilyStore((s) => s.getDeviceCount)
   const leave = useFamilyStore((s) => s.leave)
+  const nickname = useFamilyStore((s) => s.nickname)
+  const deviceId = useFamilyStore((s) => s.deviceId)
+  const setNickname = useFamilyStore((s) => s.setNickname)
+  const members = useFamilyStore((s) => s.members)
+  const fetchMembers = useFamilyStore((s) => s.fetchMembers)
   const navigate = useNavigate()
 
   const presets = useSupplementStore((s) => s.presets)
@@ -66,6 +74,12 @@ const SettingsPage = () => {
 
   const [editPassword, setEditPassword] = useState(familyPassword ?? '')
   const [savingPassword, setSavingPassword] = useState(false)
+  const [editNickname, setEditNickname] = useState(nickname ?? '')
+  const [savingNickname, setSavingNickname] = useState(false)
+
+  useEffect(() => {
+    setEditNickname(nickname ?? '')
+  }, [nickname])
   const [copied, setCopied] = useState(false)
   const [showLeaveDialog, setShowLeaveDialog] = useState(false)
   const [isLastMember, setIsLastMember] = useState(false)
@@ -98,11 +112,12 @@ const SettingsPage = () => {
     if (familyId) {
       fetchPresets(familyId)
       subscribeSupplement(familyId)
+      fetchMembers(familyId)
     }
     return () => {
       unsubscribeSupplement()
     }
-  }, [familyId, fetchPresets, subscribeSupplement, unsubscribeSupplement])
+  }, [familyId, fetchPresets, subscribeSupplement, unsubscribeSupplement, fetchMembers])
 
   const handleCopyCode = async () => {
     if (!familyCode) return
@@ -125,6 +140,17 @@ const SettingsPage = () => {
       await updatePassword(editPassword)
     } finally {
       setSavingPassword(false)
+    }
+  }
+
+  const handleSaveNickname = async () => {
+    const trimmed = editNickname.trim()
+    if (!trimmed || trimmed === nickname) return
+    setSavingNickname(true)
+    try {
+      await setNickname(trimmed)
+    } finally {
+      setSavingNickname(false)
     }
   }
 
@@ -287,6 +313,72 @@ const SettingsPage = () => {
               다른 가족이 이 방에 참여할 때 필요한 비밀번호입니다.
             </p>
           </div>
+
+          <Separator />
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="nickname" className="text-xs text-muted-foreground">
+              내 닉네임
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="nickname"
+                value={editNickname}
+                onChange={(e) => setEditNickname(e.target.value)}
+                placeholder="닉네임 입력"
+                className="h-12 text-sm font-semibold"
+              />
+              <Button
+                variant="outline"
+                className="h-12 min-w-[72px] cursor-pointer"
+                onClick={handleSaveNickname}
+                disabled={savingNickname || !editNickname.trim() || editNickname.trim() === nickname}
+              >
+                {savingNickname ? '저장 중...' : '저장'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Family Members */}
+      <Card>
+        <CardContent className="flex flex-col gap-3 px-4 py-4">
+          <div className="flex items-center gap-2">
+            <div className="rounded-full bg-indigo-50 p-1.5 dark:bg-indigo-950/40">
+              <Users className="h-3.5 w-3.5 text-indigo-700" strokeWidth={2} />
+            </div>
+            <Label className="text-sm font-semibold">가족 구성원</Label>
+            <span className="text-xs text-muted-foreground">({members.length}명)</span>
+          </div>
+          {members.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {members.map((member) => (
+                <div
+                  key={member.id}
+                  className="flex items-center gap-2 rounded-lg border px-3 py-2"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium truncate">
+                        {member.nickname ?? '이름 없음'}
+                      </span>
+                      {member.device_id === deviceId && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">나</Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(member.created_at), 'yyyy.MM.dd 참여', { locale: ko })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-xs text-muted-foreground">
+              구성원 정보를 불러오는 중...
+            </p>
+          )}
         </CardContent>
       </Card>
 

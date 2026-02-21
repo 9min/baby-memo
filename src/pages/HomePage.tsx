@@ -27,6 +27,7 @@ import type {
 const HomePage = () => {
   const familyId = useFamilyStore((s) => s.familyId)
   const deviceId = useFamilyStore((s) => s.deviceId)
+  const members = useFamilyStore((s) => s.members)
   const activities = useActivityStore((s) => s.activities)
   const babies = useBabyStore((s) => s.babies)
   const recordActivity = useActivityStore((s) => s.recordActivity)
@@ -51,6 +52,14 @@ const HomePage = () => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     }
   }, [])
+
+  const deviceMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const m of members) {
+      if (m.nickname) map[m.device_id] = m.nickname
+    }
+    return map
+  }, [members])
 
   const recentActivities = useMemo(() => activities.slice(0, 5), [activities])
 
@@ -250,7 +259,7 @@ const HomePage = () => {
         ) : (
           <div className="flex flex-col gap-2">
             {recentActivities.map((activity) => (
-              <ActivityCard key={activity.id} activity={activity} onEdit={handleEdit} />
+              <ActivityCard key={activity.id} activity={activity} onEdit={handleEdit} deviceNickname={deviceMap[activity.device_id]} />
             ))}
           </div>
         )}
