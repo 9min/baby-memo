@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useFamily } from '@/hooks/useFamily'
 import { useActivitySubscription } from '@/hooks/useActivitySubscription'
 import { useTheme } from '@/hooks/useTheme'
@@ -9,6 +10,14 @@ import HomePage from '@/pages/HomePage'
 import TimelinePage from '@/pages/TimelinePage'
 import SettingsPage from '@/pages/SettingsPage'
 import StatsPage from '@/pages/StatsPage'
+
+const ScrollToTop = () => {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
 
 const AppRoutes = () => {
   useFamily()
@@ -33,6 +42,7 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AppRoutes />
     </BrowserRouter>
   )
