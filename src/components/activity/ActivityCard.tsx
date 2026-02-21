@@ -54,7 +54,7 @@ const ActivityCard = memo(({ activity, showDelete = true, onEdit }: ActivityCard
   const Icon = config.icon
   const deleteActivity = useActivityStore((s) => s.deleteActivity)
   const [confirming, setConfirming] = useState(false)
-  const confirmTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     return () => {

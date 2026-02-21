@@ -44,7 +44,7 @@ const HomePage = () => {
   const [sleepOpen, setSleepOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     return () => {
