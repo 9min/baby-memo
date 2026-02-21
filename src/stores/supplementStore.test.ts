@@ -41,8 +41,8 @@ describe('supplementStore', () => {
   describe('fetchPresets', () => {
     it('stores fetched presets', async () => {
       const presets = [
-        { id: 'p1', family_id: 'fam-1', name: '비타민D', created_at: '2025-01-01' },
-        { id: 'p2', family_id: 'fam-1', name: '오메가3', created_at: '2025-01-01' },
+        { id: 'p1', family_id: 'fam-1', name: '비타민D', sort_order: 0, created_at: '2025-01-01' },
+        { id: 'p2', family_id: 'fam-1', name: '오메가3', sort_order: 1, created_at: '2025-01-01' },
       ]
 
       mockFrom.mockReturnValue(

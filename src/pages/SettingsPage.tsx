@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2, Users } from 'lucide-react'
+import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2, Users, GripVertical } from 'lucide-react'
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { formatBabyAge } from '@/lib/babyUtils'
@@ -30,11 +34,72 @@ import {
 import InstallPrompt from '@/components/layout/InstallPrompt'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import type { DrinkType, DiaperType, DiaperAmount } from '@/types/database'
+import type { DrinkType, DiaperType, DiaperAmount, SupplementPreset } from '@/types/database'
 
 const DRINK_TYPES: DrinkType[] = ['formula', 'milk', 'water']
 const DIAPER_TYPES: DiaperType[] = ['pee', 'poo']
 const DIAPER_AMOUNTS: DiaperAmount[] = ['little', 'normal', 'much']
+
+const SortablePresetItem = ({
+  preset,
+  isChecked,
+  onToggle,
+  onDelete,
+}: {
+  preset: SupplementPreset
+  isChecked: boolean
+  onToggle: () => void
+  onDelete: () => void
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: preset.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'flex items-center gap-2 rounded-lg border px-3 py-2',
+        isDragging && 'opacity-50 shadow-lg',
+      )}
+    >
+      <button
+        type="button"
+        className="cursor-grab touch-none text-muted-foreground hover:text-foreground"
+        aria-label="드래그하여 순서 변경"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <Checkbox
+        checked={isChecked}
+        onCheckedChange={onToggle}
+        className="cursor-pointer"
+      />
+      <span className="flex-1 text-sm font-medium">{preset.name}</span>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 cursor-pointer text-muted-foreground hover:text-destructive"
+        onClick={onDelete}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  )
+}
 
 const SettingsPage = () => {
   const familyId = useFamilyStore((s) => s.familyId)
@@ -55,6 +120,7 @@ const SettingsPage = () => {
   const fetchPresets = useSupplementStore((s) => s.fetchPresets)
   const addPreset = useSupplementStore((s) => s.addPreset)
   const deletePreset = useSupplementStore((s) => s.deletePreset)
+  const reorderPresets = useSupplementStore((s) => s.reorderPresets)
   const subscribeSupplement = useSupplementStore((s) => s.subscribe)
   const unsubscribeSupplement = useSupplementStore((s) => s.unsubscribe)
 
@@ -253,6 +319,26 @@ const SettingsPage = () => {
     } catch (error) {
       console.error('Failed to kick member:', error)
     }
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id || !familyId) return
+
+    const oldIndex = presets.findIndex((p) => p.id === active.id)
+    const newIndex = presets.findIndex((p) => p.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const reordered = [...presets]
+    const [moved] = reordered.splice(oldIndex, 1)
+    reordered.splice(newIndex, 0, moved)
+
+    reorderPresets(familyId, reordered.map((p) => p.id))
   }
 
   const isSolidFoodChanged = defaultFoodName.trim() !== defaults.solidFood.food_name
@@ -623,34 +709,33 @@ const SettingsPage = () => {
             </Button>
           </div>
 
-          {/* Preset list with delete + default check */}
+          {/* Preset list with drag & drop + default check */}
           {presets.length > 0 && (
             <>
               <Separator />
               <Label className="text-xs text-muted-foreground">기본 선택 (새 기록 시 자동 체크)</Label>
-              <div className="flex flex-col gap-2">
-                {presets.map((preset) => (
-                  <div
-                    key={preset.id}
-                    className="flex items-center gap-2 rounded-lg border px-3 py-2"
-                  >
-                    <Checkbox
-                      checked={defaultSupplementNames.includes(preset.name)}
-                      onCheckedChange={() => toggleSupplementDefault(preset.name)}
-                      className="cursor-pointer"
-                    />
-                    <span className="flex-1 text-sm font-medium">{preset.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 cursor-pointer text-muted-foreground hover:text-destructive"
-                      onClick={() => deletePreset(preset.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={presets.map((p) => p.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="flex flex-col gap-2">
+                    {presets.map((preset) => (
+                      <SortablePresetItem
+                        key={preset.id}
+                        preset={preset}
+                        isChecked={defaultSupplementNames.includes(preset.name)}
+                        onToggle={() => toggleSupplementDefault(preset.name)}
+                        onDelete={() => deletePreset(preset.id)}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
               <Button
                 variant="outline"
                 className={cn(

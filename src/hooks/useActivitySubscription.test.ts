@@ -9,6 +9,7 @@ describe('useActivitySubscription', () => {
   beforeEach(() => {
     resetAllStores()
     vi.clearAllMocks()
+    useActivityStore.setState({ fetchRecentActivities: vi.fn() })
   })
 
   it('does not subscribe when no familyId', () => {
