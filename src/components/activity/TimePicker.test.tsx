@@ -11,6 +11,7 @@ describe('roundToNearest5', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    localStorage.clear()
   })
 
   it('rounds 10:02 down to 10:00', () => {
@@ -59,6 +60,7 @@ describe('TimePicker', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    localStorage.clear()
   })
 
   it('displays the time', () => {

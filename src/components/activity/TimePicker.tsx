@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { addDays, subDays, isToday, format } from 'date-fns'
+import { addDays, subDays, isToday, isBefore, startOfDay, format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
   const [editing, setEditing] = useState(false)
 
   const wouldBeFuture = value.getTime() + 5 * 60000 > Date.now() // eslint-disable-line react-hooks/purity
+  const canGoForward = isBefore(startOfDay(value), startOfDay(new Date())) // eslint-disable-line react-hooks/purity
 
   const adjust = (minutes: number) => {
     const now = Date.now()
@@ -63,7 +64,7 @@ const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
           aria-label="다음 날짜"
           className="p-1 rounded-md text-muted-foreground hover:bg-muted transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
           onClick={() => onChange(addDays(value, 1))}
-          disabled={isToday(value)}
+          disabled={!canGoForward}
         >
           <ChevronRight className="h-4 w-4" />
         </button>
