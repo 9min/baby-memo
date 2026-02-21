@@ -10,6 +10,19 @@ function generatePassword(): string {
   return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
 }
 
+async function generateUniqueNickname(familyId: string): Promise<string> {
+  const { data: existingDevices } = await supabase
+    .from('devices')
+    .select('nickname')
+    .eq('family_id', familyId)
+
+  const existingNicknames = (existingDevices ?? [])
+    .map((d) => d.nickname as string)
+    .filter(Boolean)
+
+  return generateNickname(existingNicknames)
+}
+
 interface FamilyState {
   familyId: string | null
   familyCode: string | null
@@ -77,16 +90,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
 
       // Auto-generate nickname if missing
       if (!nickname) {
-        const { data: existingDevices } = await supabase
-          .from('devices')
-          .select('nickname')
-          .eq('family_id', family.id)
-
-        const existingNicknames = (existingDevices ?? [])
-          .map((d) => d.nickname as string)
-          .filter(Boolean)
-
-        nickname = generateNickname(existingNicknames)
+        nickname = await generateUniqueNickname(family.id)
 
         await supabase
           .from('devices')
@@ -158,16 +162,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     }
 
     // Generate unique nickname
-    const { data: existingDevices } = await supabase
-      .from('devices')
-      .select('nickname')
-      .eq('family_id', familyId)
-
-    const existingNicknames = (existingDevices ?? [])
-      .map((d) => d.nickname as string)
-      .filter(Boolean)
-
-    const nickname = generateNickname(existingNicknames)
+    const nickname = await generateUniqueNickname(familyId)
 
     // Upsert device into this family
     const deviceId = get().deviceId
@@ -269,11 +264,16 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   },
 
   fetchMembers: async (familyId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('devices')
       .select('*')
       .eq('family_id', familyId)
       .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Failed to fetch members:', error)
+      return
+    }
 
     if (data) {
       set({ members: data as Device[] })

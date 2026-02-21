@@ -76,6 +76,10 @@ const SettingsPage = () => {
   const [savingPassword, setSavingPassword] = useState(false)
   const [editNickname, setEditNickname] = useState(nickname ?? '')
   const [savingNickname, setSavingNickname] = useState(false)
+
+  useEffect(() => {
+    setEditNickname(nickname ?? '')
+  }, [nickname])
   const [copied, setCopied] = useState(false)
   const [showLeaveDialog, setShowLeaveDialog] = useState(false)
   const [isLastMember, setIsLastMember] = useState(false)

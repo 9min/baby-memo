@@ -21,8 +21,12 @@ export const generateNickname = (existingNicknames: string[] = []): string => {
     if (!existing.has(nickname)) return nickname
   }
 
-  // Fallback: append number
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
-  const animal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)]
-  return `${adj} ${animal}${Math.floor(Math.random() * 100)}`
+  // Fallback: append number, ensure uniqueness
+  let fallback: string
+  do {
+    const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
+    const animal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)]
+    fallback = `${adj} ${animal}${Math.floor(Math.random() * 100)}`
+  } while (existing.has(fallback))
+  return fallback
 }

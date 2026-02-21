@@ -141,7 +141,7 @@ describe('ActivityCard', () => {
     const activity = createMockActivity({ recorded_at: '2025-01-15T10:30:00', memo: null })
     render(<ActivityCard activity={activity} />)
     // Should only have time, no separator dots
-    const timeRow = screen.getByText('10:30').parentElement
-    expect(timeRow?.querySelectorAll('span').length).toBe(1)
+    expect(screen.getByText('10:30')).toBeInTheDocument()
+    expect(screen.queryByText('·')).not.toBeInTheDocument()
   })
 })
