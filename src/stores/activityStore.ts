@@ -8,9 +8,11 @@ interface ActivityState {
   loading: boolean
   selectedDate: Date
   channel: RealtimeChannel | null
+  monthlyActivityDates: Record<string, number>
 
   setSelectedDate: (date: Date) => void
   fetchActivities: (familyId: string, date: Date) => Promise<void>
+  fetchMonthlyActivityDates: (familyId: string, year: number, month: number) => Promise<void>
   recordActivity: (params: {
     familyId: string
     deviceId: string
@@ -34,6 +36,7 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
   loading: false,
   selectedDate: new Date(),
   channel: null,
+  monthlyActivityDates: {},
 
   setSelectedDate: (date: Date) => {
     set({ selectedDate: date })
@@ -55,6 +58,28 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
       .order('recorded_at', { ascending: false })
 
     set({ activities: (data as Activity[]) ?? [], loading: false })
+  },
+
+  fetchMonthlyActivityDates: async (familyId: string, year: number, month: number) => {
+    const startOfMonth = new Date(year, month, 1)
+    const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999)
+
+    const { data } = await supabase
+      .from('activities')
+      .select('recorded_at')
+      .eq('family_id', familyId)
+      .gte('recorded_at', startOfMonth.toISOString())
+      .lte('recorded_at', endOfMonth.toISOString())
+
+    const counts: Record<string, number> = {}
+    if (data) {
+      for (const row of data as { recorded_at: string }[]) {
+        const dateKey = row.recorded_at.slice(0, 10)
+        counts[dateKey] = (counts[dateKey] ?? 0) + 1
+      }
+    }
+
+    set({ monthlyActivityDates: counts })
   },
 
   recordActivity: async ({ familyId, deviceId, type, recordedAt, metadata, memo }) => {
