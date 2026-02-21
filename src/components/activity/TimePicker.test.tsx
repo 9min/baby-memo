@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import TimePicker, { roundToNearest5 } from './TimePicker'
+import TimePicker from './TimePicker'
+import { roundToNearest5 } from '@/lib/timeUtils'
 
 describe('roundToNearest5', () => {
   beforeEach(() => {

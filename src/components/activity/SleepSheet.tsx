@@ -10,7 +10,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import TimePicker, { roundToNearest5 } from '@/components/activity/TimePicker'
+import TimePicker from '@/components/activity/TimePicker'
+import { roundToNearest5 } from '@/lib/timeUtils'
 import type { SleepMetadata } from '@/types/database'
 
 interface SleepSheetProps {
