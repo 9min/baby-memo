@@ -151,6 +151,7 @@ const SettingsPage = () => {
     setSavingNickname(true)
     try {
       await setNickname(trimmed)
+      showSaved('nickname')
     } finally {
       setSavingNickname(false)
     }
@@ -343,11 +344,14 @@ const SettingsPage = () => {
               />
               <Button
                 variant="outline"
-                className="h-12 min-w-[72px] cursor-pointer"
+                className={cn(
+                  'h-12 min-w-[72px] cursor-pointer',
+                  savedSection === 'nickname' && 'border-green-400 bg-green-50 text-green-700',
+                )}
                 onClick={handleSaveNickname}
                 disabled={savingNickname || !editNickname.trim() || editNickname.trim() === nickname}
               >
-                {savingNickname ? '저장 중...' : '저장'}
+                {savingNickname ? '저장 중...' : savedSection === 'nickname' ? <><Check className="h-4 w-4" />저장됨</> : '저장'}
               </Button>
             </div>
           </div>
