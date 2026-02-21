@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Home, CalendarDays, Settings } from 'lucide-react'
+import { Home, CalendarDays, BarChart3, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
 
@@ -12,6 +12,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: '/', label: '홈', icon: Home },
   { to: '/timeline', label: '타임라인', icon: CalendarDays },
+  { to: '/stats', label: '통계', icon: BarChart3 },
   { to: '/settings', label: '설정', icon: Settings },
 ]
 
