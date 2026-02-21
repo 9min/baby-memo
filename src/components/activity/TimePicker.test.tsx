@@ -11,6 +11,7 @@ describe('roundToNearest5', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    localStorage.clear()
   })
 
   it('rounds 10:02 down to 10:00', () => {
@@ -59,6 +60,7 @@ describe('TimePicker', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    localStorage.clear()
   })
 
   it('displays the time', () => {
@@ -133,5 +135,63 @@ describe('TimePicker', () => {
 
     fireEvent.click(screen.getByText('확인'))
     expect(screen.queryByText('확인')).not.toBeInTheDocument()
+  })
+
+  describe('날짜 네비게이션', () => {
+    it('날짜가 표시된다', () => {
+      render(
+        <TimePicker value={new Date('2025-01-15T10:30:00')} onChange={() => {}} />,
+      )
+      expect(screen.getByText(/1월 15일/)).toBeInTheDocument()
+    })
+
+    it('오늘이면 "오늘 ·" 접두어가 표시된다', () => {
+      render(
+        <TimePicker value={new Date('2025-01-15T10:30:00')} onChange={() => {}} />,
+      )
+      expect(screen.getByText(/오늘 ·/)).toBeInTheDocument()
+    })
+
+    it('< 클릭 시 하루 전으로 onChange 호출', () => {
+      const onChange = vi.fn()
+      render(
+        <TimePicker value={new Date('2025-01-15T10:30:00')} onChange={onChange} />,
+      )
+
+      fireEvent.click(screen.getByLabelText('이전 날짜'))
+      expect(onChange).toHaveBeenCalledOnce()
+      const arg = onChange.mock.calls[0][0] as Date
+      expect(arg.getDate()).toBe(14)
+      expect(arg.getHours()).toBe(10)
+      expect(arg.getMinutes()).toBe(30)
+    })
+
+    it('> 클릭 시 하루 후로 onChange 호출', () => {
+      const onChange = vi.fn()
+      render(
+        <TimePicker value={new Date('2025-01-14T10:30:00')} onChange={onChange} />,
+      )
+
+      fireEvent.click(screen.getByLabelText('다음 날짜'))
+      expect(onChange).toHaveBeenCalledOnce()
+      const arg = onChange.mock.calls[0][0] as Date
+      expect(arg.getDate()).toBe(15)
+      expect(arg.getHours()).toBe(10)
+      expect(arg.getMinutes()).toBe(30)
+    })
+
+    it('오늘일 때 > 버튼이 disabled', () => {
+      render(
+        <TimePicker value={new Date('2025-01-15T10:30:00')} onChange={() => {}} />,
+      )
+      expect(screen.getByLabelText('다음 날짜')).toBeDisabled()
+    })
+
+    it('과거 날짜일 때 > 버튼이 enabled', () => {
+      render(
+        <TimePicker value={new Date('2025-01-14T10:30:00')} onChange={() => {}} />,
+      )
+      expect(screen.getByLabelText('다음 날짜')).not.toBeDisabled()
+    })
   })
 })

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { format } from 'date-fns'
+import { addDays, subDays, isToday, isBefore, startOfDay, format } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface TimePickerProps {
@@ -15,6 +16,7 @@ const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
   const [editing, setEditing] = useState(false)
 
   const wouldBeFuture = value.getTime() + 5 * 60000 > Date.now() // eslint-disable-line react-hooks/purity
+  const canGoForward = isBefore(startOfDay(value), startOfDay(new Date())) // eslint-disable-line react-hooks/purity
 
   const adjust = (minutes: number) => {
     const now = Date.now()
@@ -43,6 +45,30 @@ const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
   return (
     <div className="flex flex-col items-center gap-1.5 rounded-xl bg-muted/50 py-3">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <div className="flex items-center justify-center gap-1">
+        <button
+          type="button"
+          aria-label="이전 날짜"
+          className="p-1 rounded-md text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+          onClick={() => onChange(subDays(value, 1))}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <span className="text-sm font-medium tabular-nums">
+          {isToday(value)
+            ? `오늘 · ${format(value, 'M월 d일 (E)', { locale: ko })}`
+            : format(value, 'M월 d일 (E)', { locale: ko })}
+        </span>
+        <button
+          type="button"
+          aria-label="다음 날짜"
+          className="p-1 rounded-md text-muted-foreground hover:bg-muted transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+          onClick={() => onChange(addDays(value, 1))}
+          disabled={!canGoForward}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
       <div className="flex items-center justify-center gap-3">
         <Button
           type="button"
