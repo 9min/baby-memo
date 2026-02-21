@@ -1,14 +1,15 @@
+import { memo, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { useStatsStore } from '@/stores/statsStore'
 
-const StatsSummaryCard = () => {
+const StatsSummaryCard = memo(() => {
   const activityCounts = useStatsStore((s) => s.activityCounts)
   const drinkIntakes = useStatsStore((s) => s.drinkIntakes)
   const sleepDurations = useStatsStore((s) => s.sleepDurations)
 
-  const totalActivities = activityCounts.reduce((sum, d) => sum + d.total, 0)
-  const totalDrinkMl = drinkIntakes.reduce((sum, d) => sum + d.total, 0)
-  const totalSleepMin = sleepDurations.reduce((sum, d) => sum + d.minutes, 0)
+  const totalActivities = useMemo(() => activityCounts.reduce((sum, d) => sum + d.total, 0), [activityCounts])
+  const totalDrinkMl = useMemo(() => drinkIntakes.reduce((sum, d) => sum + d.total, 0), [drinkIntakes])
+  const totalSleepMin = useMemo(() => sleepDurations.reduce((sum, d) => sum + d.minutes, 0), [sleepDurations])
   const sleepHours = Math.floor(totalSleepMin / 60)
   const sleepMins = totalSleepMin % 60
 
@@ -32,6 +33,8 @@ const StatsSummaryCard = () => {
       </CardContent>
     </Card>
   )
-}
+})
+
+StatsSummaryCard.displayName = 'StatsSummaryCard'
 
 export default StatsSummaryCard

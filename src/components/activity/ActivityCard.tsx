@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { Trash2 } from 'lucide-react'
@@ -49,11 +49,18 @@ interface ActivityCardProps {
   onEdit?: (activity: Activity) => void
 }
 
-const ActivityCard = ({ activity, showDelete = true, onEdit }: ActivityCardProps) => {
+const ActivityCard = memo(({ activity, showDelete = true, onEdit }: ActivityCardProps) => {
   const config = ACTIVITY_CONFIGS[activity.type]
   const Icon = config.icon
   const deleteActivity = useActivityStore((s) => s.deleteActivity)
   const [confirming, setConfirming] = useState(false)
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
+
+  useEffect(() => {
+    return () => {
+      if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current)
+    }
+  }, [])
 
   const timeStr = format(new Date(activity.recorded_at), 'HH:mm', { locale: ko })
   const detail = getActivityDetail(activity)
@@ -61,9 +68,11 @@ const ActivityCard = ({ activity, showDelete = true, onEdit }: ActivityCardProps
   const handleDelete = async () => {
     if (!confirming) {
       setConfirming(true)
-      setTimeout(() => setConfirming(false), 3000)
+      if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current)
+      confirmTimerRef.current = setTimeout(() => setConfirming(false), 3000)
       return
     }
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current)
     await deleteActivity(activity.id)
   }
 
@@ -116,6 +125,8 @@ const ActivityCard = ({ activity, showDelete = true, onEdit }: ActivityCardProps
       </CardContent>
     </Card>
   )
-}
+})
+
+ActivityCard.displayName = 'ActivityCard'
 
 export default ActivityCard

@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useStatsStore } from '@/stores/statsStore'
@@ -7,14 +8,14 @@ import type { ActivityType } from '@/types/database'
 
 const ACTIVITY_TYPES: ActivityType[] = ['solid_food', 'drink', 'supplement', 'diaper', 'sleep']
 
-const ActivityCountChart = () => {
+const ActivityCountChart = memo(() => {
   const activityCounts = useStatsStore((s) => s.activityCounts)
   const period = useStatsStore((s) => s.period)
 
-  const chartData = activityCounts.map((d) => ({
+  const chartData = useMemo(() => activityCounts.map((d) => ({
     date: formatXAxisLabel(d.date, period),
     ...d.counts,
-  }))
+  })), [activityCounts, period])
 
   const hasData = activityCounts.some((d) => d.total > 0)
 
@@ -63,6 +64,8 @@ const ActivityCountChart = () => {
       </CardContent>
     </Card>
   )
-}
+})
+
+ActivityCountChart.displayName = 'ActivityCountChart'
 
 export default ActivityCountChart

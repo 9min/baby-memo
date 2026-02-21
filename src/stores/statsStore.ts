@@ -82,7 +82,7 @@ export const useStatsStore = create<StatsState>((set, get) => {
 
       const { data } = await supabase
         .from('activities')
-        .select('*')
+        .select('id, type, recorded_at, metadata')
         .eq('family_id', familyId)
         .gte('recorded_at', dateRange.start.toISOString())
         .lte('recorded_at', dateRange.end.toISOString())

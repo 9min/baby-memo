@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useStatsStore } from '@/stores/statsStore'
@@ -7,14 +8,14 @@ import type { DrinkType } from '@/types/database'
 
 const DRINK_TYPES: DrinkType[] = ['formula', 'milk', 'water']
 
-const DrinkIntakeChart = () => {
+const DrinkIntakeChart = memo(() => {
   const drinkIntakes = useStatsStore((s) => s.drinkIntakes)
   const period = useStatsStore((s) => s.period)
 
-  const chartData = drinkIntakes.map((d) => ({
+  const chartData = useMemo(() => drinkIntakes.map((d) => ({
     date: formatXAxisLabel(d.date, period),
     ...d.intakes,
-  }))
+  })), [drinkIntakes, period])
 
   const hasData = drinkIntakes.some((d) => d.total > 0)
 
@@ -65,6 +66,8 @@ const DrinkIntakeChart = () => {
       </CardContent>
     </Card>
   )
-}
+})
+
+DrinkIntakeChart.displayName = 'DrinkIntakeChart'
 
 export default DrinkIntakeChart

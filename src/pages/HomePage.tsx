@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight, Check } from 'lucide-react'
 import { formatBabyAge } from '@/lib/babyUtils'
@@ -44,15 +44,23 @@ const HomePage = () => {
   const [sleepOpen, setSleepOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
 
-  const recentActivities = activities.slice(0, 5)
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    }
+  }, [])
 
-  const showToast = (message: string) => {
+  const recentActivities = useMemo(() => activities.slice(0, 5), [activities])
+
+  const showToast = useCallback((message: string) => {
     setToast(message)
-    setTimeout(() => setToast(null), 2000)
-  }
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => setToast(null), 2000)
+  }, [])
 
-  const handleActivityPress = (type: ActivityType) => {
+  const handleActivityPress = useCallback((type: ActivityType) => {
     setEditingActivity(null)
     switch (type) {
       case 'solid_food':
@@ -71,9 +79,9 @@ const HomePage = () => {
         setSleepOpen(true)
         break
     }
-  }
+  }, [])
 
-  const handleEdit = (activity: Activity) => {
+  const handleEdit = useCallback((activity: Activity) => {
     setEditingActivity(activity)
     switch (activity.type) {
       case 'solid_food':
@@ -92,9 +100,9 @@ const HomePage = () => {
         setSleepOpen(true)
         break
     }
-  }
+  }, [])
 
-  const handleSubmit = (type: ActivityType, metadata: ActivityMetadata, recordedAt: Date, toastMsg: string) => {
+  const handleSubmit = useCallback((type: ActivityType, metadata: ActivityMetadata, recordedAt: Date, toastMsg: string) => {
     if (editingActivity) {
       updateActivity({
         activityId: editingActivity.id,
@@ -114,27 +122,72 @@ const HomePage = () => {
       })
       showToast(toastMsg)
     }
-  }
+  }, [editingActivity, familyId, deviceId, recordActivity, updateActivity, showToast])
 
-  const solidFoodInitial = editingActivity?.type === 'solid_food'
+  const solidFoodInitial = useMemo(() => editingActivity?.type === 'solid_food'
     ? { metadata: editingActivity.metadata as SolidFoodMetadata, recordedAt: new Date(editingActivity.recorded_at) }
-    : undefined
+    : undefined, [editingActivity])
 
-  const drinkInitial = editingActivity?.type === 'drink'
+  const drinkInitial = useMemo(() => editingActivity?.type === 'drink'
     ? { metadata: editingActivity.metadata as DrinkMetadata, recordedAt: new Date(editingActivity.recorded_at) }
-    : undefined
+    : undefined, [editingActivity])
 
-  const supplementInitial = editingActivity?.type === 'supplement'
+  const supplementInitial = useMemo(() => editingActivity?.type === 'supplement'
     ? { metadata: editingActivity.metadata as SupplementMetadata, recordedAt: new Date(editingActivity.recorded_at) }
-    : undefined
+    : undefined, [editingActivity])
 
-  const diaperInitial = editingActivity?.type === 'diaper'
+  const diaperInitial = useMemo(() => editingActivity?.type === 'diaper'
     ? { metadata: editingActivity.metadata as DiaperMetadata, recordedAt: new Date(editingActivity.recorded_at) }
-    : undefined
+    : undefined, [editingActivity])
 
-  const sleepInitial = editingActivity?.type === 'sleep'
+  const sleepInitial = useMemo(() => editingActivity?.type === 'sleep'
     ? { metadata: editingActivity.metadata as SleepMetadata, recordedAt: new Date(editingActivity.recorded_at) }
-    : undefined
+    : undefined, [editingActivity])
+
+  const handleSolidFoodOpenChange = useCallback((open: boolean) => {
+    setSolidFoodOpen(open)
+    if (!open) setEditingActivity(null)
+  }, [])
+
+  const handleDrinkOpenChange = useCallback((open: boolean) => {
+    setDrinkOpen(open)
+    if (!open) setEditingActivity(null)
+  }, [])
+
+  const handleSupplementOpenChange = useCallback((open: boolean) => {
+    setSupplementOpen(open)
+    if (!open) setEditingActivity(null)
+  }, [])
+
+  const handleDiaperOpenChange = useCallback((open: boolean) => {
+    setDiaperOpen(open)
+    if (!open) setEditingActivity(null)
+  }, [])
+
+  const handleSleepOpenChange = useCallback((open: boolean) => {
+    setSleepOpen(open)
+    if (!open) setEditingActivity(null)
+  }, [])
+
+  const handleSolidFoodSubmit = useCallback((metadata: SolidFoodMetadata, recordedAt: Date) => {
+    handleSubmit('solid_food', metadata, recordedAt, '먹어요 기록 완료')
+  }, [handleSubmit])
+
+  const handleDrinkSubmit = useCallback((metadata: DrinkMetadata, recordedAt: Date) => {
+    handleSubmit('drink', metadata, recordedAt, '마셔요 기록 완료')
+  }, [handleSubmit])
+
+  const handleSupplementSubmit = useCallback((metadata: SupplementMetadata, recordedAt: Date) => {
+    handleSubmit('supplement', metadata, recordedAt, '영양제 기록 완료')
+  }, [handleSubmit])
+
+  const handleDiaperSubmit = useCallback((metadata: DiaperMetadata, recordedAt: Date) => {
+    handleSubmit('diaper', metadata, recordedAt, '기저귀 기록 완료')
+  }, [handleSubmit])
+
+  const handleSleepSubmit = useCallback((metadata: SleepMetadata, recordedAt: Date) => {
+    handleSubmit('sleep', metadata, recordedAt, '잠자요 기록 완료')
+  }, [handleSubmit])
 
   return (
     <div className="flex flex-col gap-6 py-4">
@@ -206,32 +259,32 @@ const HomePage = () => {
       {/* Activity Sheets */}
       <SolidFoodSheet
         open={solidFoodOpen}
-        onOpenChange={(open) => { setSolidFoodOpen(open); if (!open) setEditingActivity(null) }}
-        onSubmit={(metadata, recordedAt) => handleSubmit('solid_food', metadata, recordedAt, '먹어요 기록 완료')}
+        onOpenChange={handleSolidFoodOpenChange}
+        onSubmit={handleSolidFoodSubmit}
         initialData={solidFoodInitial}
       />
       <DrinkSheet
         open={drinkOpen}
-        onOpenChange={(open) => { setDrinkOpen(open); if (!open) setEditingActivity(null) }}
-        onSubmit={(metadata, recordedAt) => handleSubmit('drink', metadata, recordedAt, '마셔요 기록 완료')}
+        onOpenChange={handleDrinkOpenChange}
+        onSubmit={handleDrinkSubmit}
         initialData={drinkInitial}
       />
       <SupplementSheet
         open={supplementOpen}
-        onOpenChange={(open) => { setSupplementOpen(open); if (!open) setEditingActivity(null) }}
-        onSubmit={(metadata, recordedAt) => handleSubmit('supplement', metadata, recordedAt, '영양제 기록 완료')}
+        onOpenChange={handleSupplementOpenChange}
+        onSubmit={handleSupplementSubmit}
         initialData={supplementInitial}
       />
       <DiaperSheet
         open={diaperOpen}
-        onOpenChange={(open) => { setDiaperOpen(open); if (!open) setEditingActivity(null) }}
-        onSubmit={(metadata, recordedAt) => handleSubmit('diaper', metadata, recordedAt, '기저귀 기록 완료')}
+        onOpenChange={handleDiaperOpenChange}
+        onSubmit={handleDiaperSubmit}
         initialData={diaperInitial}
       />
       <SleepSheet
         open={sleepOpen}
-        onOpenChange={(open) => { setSleepOpen(open); if (!open) setEditingActivity(null) }}
-        onSubmit={(metadata, recordedAt) => handleSubmit('sleep', metadata, recordedAt, '잠자요 기록 완료')}
+        onOpenChange={handleSleepOpenChange}
+        onSubmit={handleSleepSubmit}
         initialData={sleepInitial}
       />
 
