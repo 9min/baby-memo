@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useFamilyStore } from '@/stores/familyStore'
 import { useActivityStore } from '@/stores/activityStore'
+import { useBabyStore } from '@/stores/babyStore'
 
 export const useActivitySubscription = () => {
   const familyId = useFamilyStore((s) => s.familyId)
@@ -8,16 +9,22 @@ export const useActivitySubscription = () => {
   const unsubscribe = useActivityStore((s) => s.unsubscribe)
   const fetchActivities = useActivityStore((s) => s.fetchActivities)
   const selectedDate = useActivityStore((s) => s.selectedDate)
+  const subscribeBabies = useBabyStore((s) => s.subscribe)
+  const unsubscribeBabies = useBabyStore((s) => s.unsubscribe)
+  const fetchBabies = useBabyStore((s) => s.fetchBabies)
 
   useEffect(() => {
     if (!familyId) return
 
     subscribe(familyId)
+    subscribeBabies(familyId)
+    fetchBabies(familyId)
 
     return () => {
       unsubscribe()
+      unsubscribeBabies()
     }
-  }, [familyId, subscribe, unsubscribe])
+  }, [familyId, subscribe, unsubscribe, subscribeBabies, unsubscribeBabies, fetchBabies])
 
   useEffect(() => {
     if (!familyId) return

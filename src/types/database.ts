@@ -62,3 +62,11 @@ export interface SupplementPreset {
   name: string
   created_at: string
 }
+
+export interface Baby {
+  id: string
+  family_id: string
+  name: string
+  birthdate: string
+  created_at: string
+}

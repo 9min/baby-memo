@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react'
-import { Check } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Check, List, CalendarDays } from 'lucide-react'
 import { useActivityStore } from '@/stores/activityStore'
 import { useFamilyStore } from '@/stores/familyStore'
+import { groupByTimeOfDay } from '@/lib/timeGrouping'
+import { Button } from '@/components/ui/button'
 import DateNavigator from '@/components/activity/DateNavigator'
+import MonthlyCalendar from '@/components/activity/MonthlyCalendar'
 import ActivityCard from '@/components/activity/ActivityCard'
 import SolidFoodSheet from '@/components/activity/SolidFoodSheet'
 import DrinkSheet from '@/components/activity/DrinkSheet'
@@ -20,34 +23,7 @@ import type {
   SleepMetadata,
 } from '@/types/database'
 
-interface TimeGroup {
-  label: string
-  activities: Activity[]
-}
-
-function groupByTimeOfDay(activities: Activity[]): TimeGroup[] {
-  const morning: Activity[] = []
-  const afternoon: Activity[] = []
-  const evening: Activity[] = []
-
-  for (const activity of activities) {
-    const hour = new Date(activity.recorded_at).getHours()
-    if (hour >= 6 && hour < 12) {
-      morning.push(activity)
-    } else if (hour >= 12 && hour < 18) {
-      afternoon.push(activity)
-    } else {
-      evening.push(activity)
-    }
-  }
-
-  const groups: TimeGroup[] = []
-  if (morning.length > 0) groups.push({ label: '오전', activities: morning })
-  if (afternoon.length > 0) groups.push({ label: '오후', activities: afternoon })
-  if (evening.length > 0) groups.push({ label: '저녁/밤', activities: evening })
-
-  return groups
-}
+type ViewMode = 'day' | 'month'
 
 const TimelinePage = () => {
   const familyId = useFamilyStore((s) => s.familyId)
@@ -58,8 +34,24 @@ const TimelinePage = () => {
   const loading = useActivityStore((s) => s.loading)
   const updateActivity = useActivityStore((s) => s.updateActivity)
   const recordActivity = useActivityStore((s) => s.recordActivity)
+  const monthlyActivityDates = useActivityStore((s) => s.monthlyActivityDates)
+  const fetchMonthlyActivityDates = useActivityStore((s) => s.fetchMonthlyActivityDates)
 
+  const [viewMode, setViewMode] = useState<ViewMode>('day')
+  const [currentMonth, setCurrentMonth] = useState(() => new Date())
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null)
+
+  useEffect(() => {
+    if (viewMode === 'month' && familyId) {
+      fetchMonthlyActivityDates(familyId, currentMonth.getFullYear(), currentMonth.getMonth())
+    }
+  }, [viewMode, familyId, currentMonth, fetchMonthlyActivityDates])
+
+  const handleDateSelect = useCallback((date: Date) => {
+    setSelectedDate(date)
+    setViewMode('day')
+  }, [setSelectedDate])
+
   const [solidFoodOpen, setSolidFoodOpen] = useState(false)
   const [drinkOpen, setDrinkOpen] = useState(false)
   const [supplementOpen, setSupplementOpen] = useState(false)
@@ -142,6 +134,37 @@ const TimelinePage = () => {
 
   return (
     <div className="flex flex-col gap-3 py-4">
+      {/* View mode toggle */}
+      <div className="flex justify-end gap-1">
+        <Button
+          variant={viewMode === 'day' ? 'default' : 'ghost'}
+          size="icon"
+          className="h-8 w-8 cursor-pointer"
+          onClick={() => setViewMode('day')}
+          aria-label="일별 보기"
+        >
+          <List className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={viewMode === 'month' ? 'default' : 'ghost'}
+          size="icon"
+          className="h-8 w-8 cursor-pointer"
+          onClick={() => setViewMode('month')}
+          aria-label="월별 보기"
+        >
+          <CalendarDays className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {viewMode === 'month' ? (
+        <MonthlyCalendar
+          currentMonth={currentMonth}
+          onMonthChange={setCurrentMonth}
+          onDateSelect={handleDateSelect}
+          activityDates={monthlyActivityDates}
+        />
+      ) : (
+        <>
       <DateNavigator date={selectedDate} onDateChange={setSelectedDate} />
 
       {loading ? (
@@ -154,8 +177,8 @@ const TimelinePage = () => {
           ))}
         </div>
       ) : groups.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-primary/20 bg-primary/[0.02] py-16 text-center">
+          <p className="text-sm font-medium text-muted-foreground">
             이 날짜에 기록된 활동이 없습니다
           </p>
         </div>
@@ -179,6 +202,8 @@ const TimelinePage = () => {
             </div>
           ))}
         </div>
+      )}
+        </>
       )}
 
       {/* Edit Sheets */}

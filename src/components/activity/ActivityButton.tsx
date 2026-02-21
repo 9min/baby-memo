@@ -13,15 +13,15 @@ const ActivityButton = ({ config, onClick }: ActivityButtonProps) => {
     <button
       onClick={onClick}
       className={cn(
-        'flex min-h-[100px] cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl p-5',
+        'flex min-h-[100px] cursor-pointer flex-col items-center justify-center gap-2.5 rounded-2xl p-5',
         'shadow-sm transition-all duration-200',
-        'hover:shadow-md hover:brightness-95 active:scale-[0.97]',
+        'hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] active:shadow-sm',
         config.bgColor,
         config.textColor,
       )}
     >
-      <Icon className="h-9 w-9" strokeWidth={1.8} />
-      <span className="text-base font-semibold">{config.label}</span>
+      <Icon className="h-8 w-8" strokeWidth={1.8} />
+      <span className="text-sm font-bold">{config.label}</span>
     </button>
   )
 }

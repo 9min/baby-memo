@@ -25,7 +25,7 @@ const DateNavigator = ({ date, onDateChange }: DateNavigatorProps) => {
         <ChevronLeft className="h-5 w-5" />
       </Button>
       <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold">{dateLabel}</span>
+        <span className="text-sm font-bold">{dateLabel}</span>
         {!isToday(date) && (
           <Button
             variant="secondary"

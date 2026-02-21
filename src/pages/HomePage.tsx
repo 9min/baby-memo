@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight, Check } from 'lucide-react'
+import { formatBabyAge } from '@/lib/babyUtils'
 import { useFamilyStore } from '@/stores/familyStore'
 import { useActivityStore } from '@/stores/activityStore'
+import { useBabyStore } from '@/stores/babyStore'
 import { ACTIVITY_CONFIGS, ACTIVITY_TYPES } from '@/lib/activityConfig'
 import ActivityButton from '@/components/activity/ActivityButton'
 import ActivityCard from '@/components/activity/ActivityCard'
@@ -26,6 +28,7 @@ const HomePage = () => {
   const familyId = useFamilyStore((s) => s.familyId)
   const deviceId = useFamilyStore((s) => s.deviceId)
   const activities = useActivityStore((s) => s.activities)
+  const babies = useBabyStore((s) => s.babies)
   const recordActivity = useActivityStore((s) => s.recordActivity)
   const updateActivity = useActivityStore((s) => s.updateActivity)
   const setSelectedDate = useActivityStore((s) => s.setSelectedDate)
@@ -135,12 +138,27 @@ const HomePage = () => {
 
   return (
     <div className="flex flex-col gap-6 py-4">
+      {/* Baby Info */}
+      {babies.length > 0 && (
+        <div className="flex items-center gap-3">
+          {babies.map((baby) => (
+            <div
+              key={baby.id}
+              className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5"
+            >
+              <span className="text-sm font-bold text-primary">{baby.name}</span>
+              <span className="text-xs text-primary/70">{formatBabyAge(baby.birthdate)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Activity Buttons */}
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           활동 기록
         </h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2.5">
           {ACTIVITY_TYPES.map((type) => (
             <ActivityButton
               key={type}
@@ -154,7 +172,7 @@ const HomePage = () => {
       {/* Recent Activities */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-muted-foreground">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             최근 활동
           </h2>
           {recentActivities.length > 0 && (
@@ -168,8 +186,8 @@ const HomePage = () => {
           )}
         </div>
         {recentActivities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-10 text-center">
-            <p className="text-sm text-muted-foreground">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-primary/20 bg-primary/[0.02] py-10 text-center">
+            <p className="text-sm font-medium text-muted-foreground">
               아직 기록이 없어요
             </p>
             <p className="mt-1 text-xs text-muted-foreground/70">
