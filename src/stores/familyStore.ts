@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { getDeviceId } from '@/lib/deviceUtils'
 import { FAMILY_CODE_KEY } from '@/lib/constants'
 import { useDefaultsStore } from '@/stores/defaultsStore'
+import { generateNickname } from '@/lib/nicknameGenerator'
+import type { Device } from '@/types/database'
 
 function generatePassword(): string {
   return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
@@ -14,6 +16,8 @@ interface FamilyState {
   familyPassword: string | null
   deviceId: string
   initialized: boolean
+  nickname: string | null
+  members: Device[]
 
   initialize: () => Promise<void>
   checkFamilyExists: (code: string) => Promise<boolean>
@@ -21,6 +25,8 @@ interface FamilyState {
   updatePassword: (password: string) => Promise<void>
   getDeviceCount: () => Promise<number>
   leave: () => Promise<void>
+  setNickname: (nickname: string) => Promise<void>
+  fetchMembers: (familyId: string) => Promise<void>
 }
 
 export const useFamilyStore = create<FamilyState>((set, get) => ({
@@ -29,6 +35,8 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   familyPassword: null,
   deviceId: getDeviceId(),
   initialized: false,
+  nickname: null,
+  members: [],
 
   initialize: async () => {
     const savedCode = localStorage.getItem(FAMILY_CODE_KEY)
@@ -54,7 +62,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       const deviceId = get().deviceId
       const { data: device } = await supabase
         .from('devices')
-        .select('id')
+        .select('id, nickname')
         .eq('device_id', deviceId)
         .eq('family_id', family.id)
         .single()
@@ -65,12 +73,38 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
         return
       }
 
+      let nickname = device.nickname as string | null
+
+      // Auto-generate nickname if missing
+      if (!nickname) {
+        const { data: existingDevices } = await supabase
+          .from('devices')
+          .select('nickname')
+          .eq('family_id', family.id)
+
+        const existingNicknames = (existingDevices ?? [])
+          .map((d) => d.nickname as string)
+          .filter(Boolean)
+
+        nickname = generateNickname(existingNicknames)
+
+        await supabase
+          .from('devices')
+          .update({ nickname })
+          .eq('device_id', deviceId)
+          .eq('family_id', family.id)
+      }
+
       set({
         familyId: family.id,
         familyCode: family.code,
         familyPassword: family.password,
+        nickname,
         initialized: true,
       })
+
+      // Fetch members in background
+      get().fetchMembers(family.id)
     } catch {
       localStorage.removeItem(FAMILY_CODE_KEY)
       set({ initialized: true })
@@ -123,12 +157,24 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       familyPassword = created.password
     }
 
+    // Generate unique nickname
+    const { data: existingDevices } = await supabase
+      .from('devices')
+      .select('nickname')
+      .eq('family_id', familyId)
+
+    const existingNicknames = (existingDevices ?? [])
+      .map((d) => d.nickname as string)
+      .filter(Boolean)
+
+    const nickname = generateNickname(existingNicknames)
+
     // Upsert device into this family
     const deviceId = get().deviceId
     const { error: deviceError } = await supabase
       .from('devices')
       .upsert(
-        { device_id: deviceId, family_id: familyId },
+        { device_id: deviceId, family_id: familyId, nickname },
         { onConflict: 'device_id' },
       )
 
@@ -137,7 +183,10 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     }
 
     localStorage.setItem(FAMILY_CODE_KEY, upperCode)
-    set({ familyId, familyCode: upperCode, familyPassword })
+    set({ familyId, familyCode: upperCode, familyPassword, nickname })
+
+    // Fetch members in background
+    get().fetchMembers(familyId)
   },
 
   updatePassword: async (password: string) => {
@@ -199,6 +248,35 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     }
 
     localStorage.removeItem(FAMILY_CODE_KEY)
-    set({ familyId: null, familyCode: null, familyPassword: null })
+    set({ familyId: null, familyCode: null, familyPassword: null, nickname: null, members: [] })
+  },
+
+  setNickname: async (nickname: string) => {
+    const { familyId, deviceId } = get()
+    if (!familyId) return
+
+    const { error } = await supabase
+      .from('devices')
+      .update({ nickname })
+      .eq('device_id', deviceId)
+      .eq('family_id', familyId)
+
+    if (error) {
+      throw new Error('닉네임 변경에 실패했습니다.')
+    }
+
+    set({ nickname })
+  },
+
+  fetchMembers: async (familyId: string) => {
+    const { data } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('family_id', familyId)
+      .order('created_at', { ascending: true })
+
+    if (data) {
+      set({ members: data as Device[] })
+    }
   },
 }))

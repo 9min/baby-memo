@@ -47,9 +47,10 @@ interface ActivityCardProps {
   activity: Activity
   showDelete?: boolean
   onEdit?: (activity: Activity) => void
+  deviceNickname?: string
 }
 
-const ActivityCard = memo(({ activity, showDelete = true, onEdit }: ActivityCardProps) => {
+const ActivityCard = memo(({ activity, showDelete = true, onEdit, deviceNickname }: ActivityCardProps) => {
   const config = ACTIVITY_CONFIGS[activity.type]
   const Icon = config.icon
   const deleteActivity = useActivityStore((s) => s.deleteActivity)
@@ -97,6 +98,12 @@ const ActivityCard = memo(({ activity, showDelete = true, onEdit }: ActivityCard
           </div>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
             <span>{timeStr}</span>
+            {deviceNickname && (
+              <>
+                <span>·</span>
+                <span className="truncate">{deviceNickname}</span>
+              </>
+            )}
             {activity.memo && (
               <>
                 <span>·</span>
