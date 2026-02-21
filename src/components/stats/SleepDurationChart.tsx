@@ -1,16 +1,17 @@
+import { memo, useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useStatsStore } from '@/stores/statsStore'
 import { formatXAxisLabel } from '@/lib/statsUtils'
 
-const SleepDurationChart = () => {
+const SleepDurationChart = memo(() => {
   const sleepDurations = useStatsStore((s) => s.sleepDurations)
   const period = useStatsStore((s) => s.period)
 
-  const chartData = sleepDurations.map((d) => ({
+  const chartData = useMemo(() => sleepDurations.map((d) => ({
     date: formatXAxisLabel(d.date, period),
     hours: Math.round((d.minutes / 60) * 10) / 10,
-  }))
+  })), [sleepDurations, period])
 
   const hasData = sleepDurations.some((d) => d.minutes > 0)
 
@@ -53,6 +54,8 @@ const SleepDurationChart = () => {
       </CardContent>
     </Card>
   )
-}
+})
+
+SleepDurationChart.displayName = 'SleepDurationChart'
 
 export default SleepDurationChart

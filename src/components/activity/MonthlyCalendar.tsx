@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import {
   startOfMonth,
   endOfMonth,
@@ -24,7 +25,7 @@ interface MonthlyCalendarProps {
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
-const MonthlyCalendar = ({
+const MonthlyCalendar = memo(({
   currentMonth,
   onMonthChange,
   onDateSelect,
@@ -138,6 +139,8 @@ const MonthlyCalendar = ({
       </div>
     </div>
   )
-}
+})
+
+MonthlyCalendar.displayName = 'MonthlyCalendar'
 
 export default MonthlyCalendar

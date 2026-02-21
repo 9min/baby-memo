@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { format, addDays, subDays, isToday } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -8,7 +9,7 @@ interface DateNavigatorProps {
   onDateChange: (date: Date) => void
 }
 
-const DateNavigator = ({ date, onDateChange }: DateNavigatorProps) => {
+const DateNavigator = memo(({ date, onDateChange }: DateNavigatorProps) => {
   const dateLabel = isToday(date)
     ? `오늘 · ${format(date, 'M월 d일 (E)', { locale: ko })}`
     : format(date, 'M월 d일 (E)', { locale: ko })
@@ -49,6 +50,8 @@ const DateNavigator = ({ date, onDateChange }: DateNavigatorProps) => {
       </Button>
     </div>
   )
-}
+})
+
+DateNavigator.displayName = 'DateNavigator'
 
 export default DateNavigator

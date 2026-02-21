@@ -151,11 +151,24 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
             activityDate.getMonth() === selectedDate.getMonth() &&
             activityDate.getDate() === selectedDate.getDate()
           ) {
-            set((state) => ({
-              activities: [newActivity, ...state.activities].sort(
-                (a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime(),
-              ),
-            }))
+            set((state) => {
+              const list = state.activities
+              const newTime = activityDate.getTime()
+              // Binary search for insertion index (descending order)
+              let lo = 0
+              let hi = list.length
+              while (lo < hi) {
+                const mid = (lo + hi) >>> 1
+                if (new Date(list[mid].recorded_at).getTime() > newTime) {
+                  lo = mid + 1
+                } else {
+                  hi = mid
+                }
+              }
+              const next = [...list]
+              next.splice(lo, 0, newActivity)
+              return { activities: next }
+            })
           }
         },
       )

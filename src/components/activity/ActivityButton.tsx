@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { cn } from '@/lib/utils'
 import type { ActivityConfig } from '@/lib/activityConfig'
 
@@ -6,7 +7,7 @@ interface ActivityButtonProps {
   onClick: () => void
 }
 
-const ActivityButton = ({ config, onClick }: ActivityButtonProps) => {
+const ActivityButton = memo(({ config, onClick }: ActivityButtonProps) => {
   const Icon = config.icon
 
   return (
@@ -24,6 +25,8 @@ const ActivityButton = ({ config, onClick }: ActivityButtonProps) => {
       <span className="text-sm font-bold">{config.label}</span>
     </button>
   )
-}
+})
+
+ActivityButton.displayName = 'ActivityButton'
 
 export default ActivityButton
