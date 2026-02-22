@@ -149,6 +149,8 @@ export function extractSleepSessions(
       const start = new Date(a.recorded_at)
       const end = new Date(meta.end_time!)
 
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null
+
       const startMinute = (start.getHours() * 60) + start.getMinutes()
       let endMinute = (end.getHours() * 60) + end.getMinutes()
 
@@ -167,6 +169,7 @@ export function extractSleepSessions(
         endLabel: format(end, 'HH:mm'),
       }
     })
+    .filter((s): s is SleepSession => s !== null)
 }
 
 export const ACTIVITY_CHART_COLORS: Record<ActivityType, string> = {

@@ -2,10 +2,10 @@ import { memo, useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, PieChart, Pie, Cell } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useStatsStore } from '@/stores/statsStore'
-import { formatXAxisLabel, extractSleepSessions } from '@/lib/statsUtils'
+import { formatXAxisLabel, extractSleepSessions, ACTIVITY_CHART_COLORS } from '@/lib/statsUtils'
 import type { SleepSession } from '@/types/stats'
 
-const SLEEP_COLOR = '#6366f1'
+const SLEEP_COLOR = ACTIVITY_CHART_COLORS.sleep
 const EMPTY_COLOR = 'transparent'
 const TOTAL_MINUTES = 1440
 
@@ -134,8 +134,11 @@ const SleepDurationChart = memo(() => {
   )
 
   const totalMinutes = useMemo(
-    () => sleepDurations.reduce((sum, d) => sum + d.minutes, 0),
-    [sleepDurations],
+    () => (period === 'daily'
+      ? sessions.reduce((sum, s) => sum + (s.endMinute - s.startMinute), 0)
+      : sleepDurations.reduce((sum, d) => sum + d.minutes, 0)
+    ),
+    [period, sessions, sleepDurations],
   )
 
   const hasData = sleepDurations.some((d) => d.minutes > 0)
@@ -174,14 +177,14 @@ const SleepDurationChart = memo(() => {
               <Bar
                 dataKey="hours"
                 name="수면"
-                fill="#6366f1"
+                fill={SLEEP_COLOR}
                 radius={[2, 2, 0, 0]}
               >
                 <LabelList
                   dataKey="hours"
                   position="top"
                   formatter={formatSleepLabel}
-                  style={{ fontSize: 10, fill: '#6366f1' }}
+                  style={{ fontSize: 10, fill: SLEEP_COLOR }}
                 />
               </Bar>
             </BarChart>
