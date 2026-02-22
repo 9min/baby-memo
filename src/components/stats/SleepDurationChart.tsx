@@ -7,7 +7,9 @@ import type { SleepSession } from '@/types/stats'
 
 const SLEEP_COLOR = ACTIVITY_CHART_COLORS.sleep
 const EMPTY_COLOR = 'transparent'
+const TRACK_COLOR = '#e5e7eb'
 const TOTAL_MINUTES = 1440
+const TRACK_DATA = [{ value: 1 }]
 
 const formatSleepLabel = (value: string | number | boolean | null | undefined) => {
   const n = Number(value ?? 0)
@@ -70,6 +72,19 @@ const DailyPieChart = memo(({ sessions, totalMinutes }: { sessions: SleepSession
     <div className="relative" style={{ width: '100%', height: 220 }}>
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
+          {/* 배경 트랙 링 */}
+          <Pie
+            data={TRACK_DATA}
+            dataKey="value"
+            cx="50%"
+            cy="50%"
+            innerRadius={45}
+            outerRadius={75}
+            fill={TRACK_COLOR}
+            stroke="none"
+            isAnimationActive={false}
+          />
+          {/* 수면 구간 */}
           <Pie
             data={pieData}
             dataKey="value"
