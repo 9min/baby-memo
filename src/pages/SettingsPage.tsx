@@ -1,12 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2, Users, GripVertical } from 'lucide-react'
+import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2, GripVertical } from 'lucide-react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
 import { formatBabyAge } from '@/lib/babyUtils'
 import { useFamilyStore } from '@/stores/familyStore'
 import { useSupplementStore } from '@/stores/supplementStore'
@@ -32,7 +30,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import InstallPrompt from '@/components/layout/InstallPrompt'
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { DrinkType, DiaperType, DiaperAmount, SupplementPreset } from '@/types/database'
 
@@ -108,12 +105,6 @@ const SettingsPage = () => {
   const updatePassword = useFamilyStore((s) => s.updatePassword)
   const getDeviceCount = useFamilyStore((s) => s.getDeviceCount)
   const leave = useFamilyStore((s) => s.leave)
-  const nickname = useFamilyStore((s) => s.nickname)
-  const deviceId = useFamilyStore((s) => s.deviceId)
-  const setNickname = useFamilyStore((s) => s.setNickname)
-  const members = useFamilyStore((s) => s.members)
-  const fetchMembers = useFamilyStore((s) => s.fetchMembers)
-  const kickMember = useFamilyStore((s) => s.kickMember)
   const navigate = useNavigate()
 
   const presets = useSupplementStore((s) => s.presets)
@@ -141,12 +132,6 @@ const SettingsPage = () => {
 
   const [editPassword, setEditPassword] = useState(familyPassword ?? '')
   const [savingPassword, setSavingPassword] = useState(false)
-  const [editNickname, setEditNickname] = useState(nickname ?? '')
-  const [savingNickname, setSavingNickname] = useState(false)
-
-  useEffect(() => {
-    setEditNickname(nickname ?? '')
-  }, [nickname])
   const [copied, setCopied] = useState(false)
   const [showLeaveDialog, setShowLeaveDialog] = useState(false)
   const [isLastMember, setIsLastMember] = useState(false)
@@ -156,7 +141,6 @@ const SettingsPage = () => {
   const [newBabyBirthdate, setNewBabyBirthdate] = useState('')
   const [addingBaby, setAddingBaby] = useState(false)
   const [showDeleteBabyDialog, setShowDeleteBabyDialog] = useState<string | null>(null)
-  const [kickTargetId, setKickTargetId] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
   const [exportDone, setExportDone] = useState(false)
   const [savedSection, setSavedSection] = useState<string | null>(null)
@@ -180,12 +164,11 @@ const SettingsPage = () => {
     if (familyId) {
       fetchPresets(familyId)
       subscribeSupplement(familyId)
-      fetchMembers(familyId)
     }
     return () => {
       unsubscribeSupplement()
     }
-  }, [familyId, fetchPresets, subscribeSupplement, unsubscribeSupplement, fetchMembers])
+  }, [familyId, fetchPresets, subscribeSupplement, unsubscribeSupplement])
 
   const handleCopyCode = async () => {
     if (!familyCode) return
@@ -208,18 +191,6 @@ const SettingsPage = () => {
       await updatePassword(editPassword)
     } finally {
       setSavingPassword(false)
-    }
-  }
-
-  const handleSaveNickname = async () => {
-    const trimmed = editNickname.trim()
-    if (!trimmed || trimmed === nickname) return
-    setSavingNickname(true)
-    try {
-      await setNickname(trimmed)
-      showSaved('nickname')
-    } finally {
-      setSavingNickname(false)
     }
   }
 
@@ -310,17 +281,6 @@ const SettingsPage = () => {
     )
   }
 
-  const isRoomOwner = members.length > 0 && members[0].device_id === deviceId
-
-  const handleKickMember = async (targetDeviceId: string) => {
-    setKickTargetId(null)
-    try {
-      await kickMember(targetDeviceId)
-    } catch (error) {
-      console.error('Failed to kick member:', error)
-    }
-  }
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -350,7 +310,7 @@ const SettingsPage = () => {
     <div className="flex flex-col gap-6 py-4">
       <h2 className="text-lg font-extrabold">설정</h2>
 
-      {/* Family Code & Nickname */}
+      {/* Family Code & Password */}
       <Card>
         <CardContent className="flex flex-col gap-5 px-4 py-5">
           <div className="flex flex-col gap-2">
@@ -413,89 +373,6 @@ const SettingsPage = () => {
               다른 가족이 이 방에 참여할 때 필요한 비밀번호입니다.
             </p>
           </div>
-
-          <Separator />
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="nickname" className="text-xs text-muted-foreground">
-              내 닉네임
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                id="nickname"
-                value={editNickname}
-                onChange={(e) => setEditNickname(e.target.value)}
-                placeholder="닉네임 입력"
-                className="h-12 text-sm font-semibold"
-              />
-              <Button
-                variant="outline"
-                className={cn(
-                  'h-12 min-w-[72px] cursor-pointer',
-                  savedSection === 'nickname' && 'border-green-400 bg-green-50 text-green-700',
-                )}
-                onClick={handleSaveNickname}
-                disabled={savingNickname || !editNickname.trim() || editNickname.trim() === nickname}
-              >
-                {savingNickname ? '저장 중...' : savedSection === 'nickname' ? <><Check className="h-4 w-4" />저장됨</> : '저장'}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Family Members */}
-      <Card>
-        <CardContent className="flex flex-col gap-3 px-4 py-4">
-          <div className="flex items-center gap-2">
-            <div className="rounded-full bg-indigo-50 p-1.5 dark:bg-indigo-950/40">
-              <Users className="h-3.5 w-3.5 text-indigo-700" strokeWidth={2} />
-            </div>
-            <Label className="text-sm font-semibold">가족 구성원</Label>
-            <span className="text-xs text-muted-foreground">({members.length}명)</span>
-          </div>
-          {members.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {members.map((member, index) => (
-                <div
-                  key={member.id}
-                  className="flex items-center gap-2 rounded-lg border px-3 py-2"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium truncate">
-                        {member.nickname ?? '이름 없음'}
-                      </span>
-                      {index === 0 && (
-                        <Badge variant="default" className="text-[10px] px-1.5 py-0">방장</Badge>
-                      )}
-                      {member.device_id === deviceId && (
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">나</Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(member.created_at), 'yyyy.MM.dd 참여', { locale: ko })}
-                    </p>
-                  </div>
-                  {isRoomOwner && member.device_id !== deviceId && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 cursor-pointer text-muted-foreground hover:text-destructive"
-                      onClick={() => setKickTargetId(member.device_id)}
-                      aria-label={`${member.nickname ?? '구성원'} 내보내기`}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-xs text-muted-foreground">
-              구성원 정보를 불러오는 중...
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -883,26 +760,6 @@ const SettingsPage = () => {
               onClick={() => showDeleteBabyDialog && handleDeleteBaby(showDeleteBabyDialog)}
             >
               삭제
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={kickTargetId !== null} onOpenChange={(open) => { if (!open) setKickTargetId(null) }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>구성원을 내보내시겠습니까?</AlertDialogTitle>
-            <AlertDialogDescription>
-              해당 구성원을 가족방에서 내보냅니다.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="cursor-pointer">취소</AlertDialogCancel>
-            <AlertDialogAction
-              className="cursor-pointer bg-destructive text-white hover:bg-destructive/90"
-              onClick={() => kickTargetId && handleKickMember(kickTargetId)}
-            >
-              내보내기
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
