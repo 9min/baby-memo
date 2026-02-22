@@ -82,9 +82,9 @@ npm run test:coverage # 커버리지 리포트
 ```
 
 ### 테스트 현황
-- **총 38개 테스트 파일**, 347개 테스트
+- **총 38개 테스트 파일**, 356개 테스트
 - 페이지 테스트 5개, 스토어 테스트 5개, 훅 테스트 2개
-- 컴포넌트 테스트: activity 9개, layout 2개 + family 1개, stats 6개
+- 컴포넌트 테스트: activity 10개, layout 2개 + family 1개, stats 6개
 - 유틸리티 테스트: lib 7개, App 1개
 
 ### 파일 규칙
@@ -158,7 +158,9 @@ supabase/migrations/
 ├── 00006_add_sleep_activity.sql        # 수면 활동 타입
 ├── 00007_add_babies.sql                # 아기 프로필 테이블 + Realtime
 ├── 00008_enable_devices_realtime.sql   # devices 테이블 Realtime 활성화
-└── 00009_activities_device_id_set_null.sql  # activities.device_id SET NULL
+├── 00009_activities_device_id_set_null.sql  # activities.device_id SET NULL
+├── 00010_add_supplement_sort_order.sql     # supplement_presets 정렬 순서
+└── 00011_add_memo_activity.sql             # 메모 활동 타입 추가
 ```
 
 ### 마이그레이션 적용
