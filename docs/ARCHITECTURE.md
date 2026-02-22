@@ -82,7 +82,6 @@ devices
 ├── id          UUID (PK, auto)
 ├── device_id   TEXT (UNIQUE)
 ├── family_id   UUID (FK → families.id, CASCADE)
-├── nickname    TEXT (nullable)
 ├── created_at  TIMESTAMPTZ
 └── updated_at  TIMESTAMPTZ
 
@@ -162,7 +161,7 @@ FamilyGuard 렌더링
 
 ```
 familyStore
-├── State: familyId, familyCode, deviceId, nickname, initialized
+├── State: familyId, familyCode, familyPassword, deviceId, initialized
 ├── Actions: initialize, checkFamilyExists, joinOrCreate, updatePassword, getDeviceCount, leave
 
 activityStore
@@ -242,7 +241,7 @@ src/
 ├── hooks/             # useFamily, useActivitySubscription, useTheme
 ├── lib/               # supabase, constants, deviceUtils, utils, activityConfig,
 │                      #   timeGrouping, timeUtils, statsUtils, babyUtils,
-│                      #   dataExport, nicknameGenerator
+│                      #   dataExport
 ├── pages/             # JoinPage, HomePage, TimelinePage, StatsPage, SettingsPage
 ├── stores/            # familyStore, activityStore, babyStore, supplementStore,
 │                      #   statsStore, defaultsStore, themeStore

@@ -24,9 +24,6 @@ describe('TimelinePage', () => {
       familyId: 'fam-1',
       familyCode: 'TESTFAM',
       deviceId: 'dev-1',
-      members: [
-        { id: '1', device_id: 'dev-1', family_id: 'fam-1', nickname: '귀여운 토끼', created_at: '2025-01-01', updated_at: '2025-01-01' },
-      ],
     })
     useActivityStore.setState({
       activities: [],
@@ -97,13 +94,4 @@ describe('TimelinePage', () => {
     expect(screen.queryByText('저녁/밤')).not.toBeInTheDocument()
   })
 
-  it('shows device nickname in activity cards', () => {
-    useActivityStore.setState({
-      activities: [
-        createMockActivity({ recorded_at: '2025-01-15T08:00:00', device_id: 'dev-1' }),
-      ],
-    })
-    renderTimelinePage()
-    expect(screen.getByText('귀여운 토끼')).toBeInTheDocument()
-  })
 })

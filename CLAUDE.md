@@ -44,7 +44,7 @@ src/
   hooks/             # useFamily, useActivitySubscription, useTheme
   lib/               # supabase, constants, deviceUtils, utils, activityConfig,
                      #   timeGrouping, timeUtils, statsUtils, babyUtils,
-                     #   dataExport, nicknameGenerator
+                     #   dataExport
   pages/             # JoinPage, HomePage, TimelinePage, StatsPage, SettingsPage
   stores/            # familyStore, activityStore, babyStore, supplementStore,
                      #   statsStore, defaultsStore, themeStore
@@ -131,7 +131,7 @@ npx shadcn@latest add [component-name]
 - **환경**: jsdom
 
 ### 현황
-- 38개 테스트 파일, 374개 테스트
+- 38개 테스트 파일, 347개 테스트
 
 ### 명령어
 ```bash

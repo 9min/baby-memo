@@ -24,9 +24,6 @@ describe('HomePage', () => {
       familyId: 'fam-1',
       familyCode: 'TESTFAM',
       deviceId: 'dev-1',
-      members: [
-        { id: '1', device_id: 'dev-1', family_id: 'fam-1', nickname: '귀여운 토끼', created_at: '2025-01-01', updated_at: '2025-01-01' },
-      ],
     })
     useActivityStore.setState({
       activities: [],
@@ -140,13 +137,4 @@ describe('HomePage', () => {
     expect(screen.getByText('잠자요 기록')).toBeInTheDocument()
   })
 
-  it('shows device nickname in activity cards', () => {
-    useActivityStore.setState({
-      recentActivities: [
-        createMockActivity({ type: 'solid_food', device_id: 'dev-1', recorded_at: '2025-01-15T10:00:00' }),
-      ],
-    })
-    renderHomePage()
-    expect(screen.getByText('귀여운 토끼')).toBeInTheDocument()
-  })
 })
