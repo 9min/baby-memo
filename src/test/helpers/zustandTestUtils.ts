@@ -5,6 +5,7 @@ import { useSupplementStore } from '@/stores/supplementStore'
 import { useStatsStore } from '@/stores/statsStore'
 import { useBabyStore } from '@/stores/babyStore'
 import { useThemeStore } from '@/stores/themeStore'
+import { useDemoStore } from '@/stores/demoStore'
 import { getDateRange } from '@/lib/statsUtils'
 
 export function resetAllStores() {
@@ -16,11 +17,18 @@ export function resetAllStores() {
     initialized: false,
   })
 
+  useDemoStore.setState({
+    isDemo: false,
+  })
+
   useActivityStore.setState({
     activities: [],
+    recentActivities: [],
     loading: false,
     selectedDate: new Date(),
     channel: null,
+    monthlyActivityDates: {},
+    _allDemoActivities: [],
   })
 
   useDefaultsStore.setState({
