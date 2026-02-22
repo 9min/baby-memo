@@ -9,6 +9,8 @@ import {
   aggregateDrinkIntake,
   aggregateSleepDuration,
 } from '@/lib/statsUtils'
+import { useDemoStore } from '@/stores/demoStore'
+import { useActivityStore } from '@/stores/activityStore'
 
 interface StatsState {
   period: StatsPeriod
@@ -79,6 +81,19 @@ export const useStatsStore = create<StatsState>((set, get) => {
     fetchStats: async (familyId: string) => {
       const { dateRange } = get()
       set({ loading: true })
+
+      if (useDemoStore.getState().isDemo) {
+        const all = useActivityStore.getState()._allDemoActivities
+        const startMs = dateRange.start.getTime()
+        const endMs = dateRange.end.getTime()
+        const activities = all.filter((a) => {
+          const t = new Date(a.recorded_at).getTime()
+          return t >= startMs && t <= endMs
+        })
+        const aggregates = computeAggregates(activities, dateRange)
+        set({ rawActivities: activities, ...aggregates, loading: false })
+        return
+      }
 
       const { data } = await supabase
         .from('activities')

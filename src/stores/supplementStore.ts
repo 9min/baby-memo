@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import type { SupplementPreset } from '@/types/database'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import { useDemoStore } from '@/stores/demoStore'
 
 interface SupplementState {
   presets: SupplementPreset[]
@@ -22,6 +23,11 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
   channel: null,
 
   fetchPresets: async (familyId: string) => {
+    if (useDemoStore.getState().isDemo) {
+      set({ loading: false })
+      return
+    }
+
     set({ loading: true })
     const { data } = await supabase
       .from('supplement_presets')
@@ -38,6 +44,18 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
       -1,
     )
 
+    if (useDemoStore.getState().isDemo) {
+      const newPreset: SupplementPreset = {
+        id: `demo-preset-${Date.now()}`,
+        family_id: familyId,
+        name,
+        sort_order: maxOrder + 1,
+        created_at: new Date().toISOString(),
+      }
+      set((state) => ({ presets: [...state.presets, newPreset] }))
+      return
+    }
+
     const { error } = await supabase
       .from('supplement_presets')
       .insert({ family_id: familyId, name, sort_order: maxOrder + 1 })
@@ -46,6 +64,11 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
   },
 
   deletePreset: async (id: string) => {
+    if (useDemoStore.getState().isDemo) {
+      set((state) => ({ presets: state.presets.filter((p) => p.id !== id) }))
+      return
+    }
+
     const prev = get().presets
     set((state) => ({
       presets: state.presets.filter((p) => p.id !== id),
@@ -74,6 +97,8 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
       .filter((p): p is SupplementPreset => p !== null)
     set({ presets: reordered })
 
+    if (useDemoStore.getState().isDemo) return
+
     // Batch update via individual updates
     const updates = orderedIds.map((id, index) =>
       supabase
@@ -93,6 +118,8 @@ export const useSupplementStore = create<SupplementState>((set, get) => ({
   },
 
   subscribe: (familyId: string) => {
+    if (useDemoStore.getState().isDemo) return
+
     const existing = get().channel
     if (existing) {
       supabase.removeChannel(existing)

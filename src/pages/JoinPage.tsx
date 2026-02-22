@@ -1,7 +1,19 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Baby } from 'lucide-react'
+import { Baby, Eye } from 'lucide-react'
 import { useFamilyStore } from '@/stores/familyStore'
+import { useDemoStore } from '@/stores/demoStore'
+import { useActivityStore } from '@/stores/activityStore'
+import { useBabyStore } from '@/stores/babyStore'
+import { useSupplementStore } from '@/stores/supplementStore'
+import {
+  DEMO_FAMILY_ID,
+  DEMO_FAMILY_CODE,
+  DEMO_DEVICE_ID,
+  generateDemoActivities,
+  generateDemoBaby,
+  generateDemoSupplementPresets,
+} from '@/lib/demoData'
 import { APP_NAME, MIN_CODE_LENGTH, MAX_CODE_LENGTH } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +26,9 @@ const JoinPage = () => {
   const joinOrCreate = useFamilyStore((s) => s.joinOrCreate)
   const navigate = useNavigate()
 
+  const enterDemo = useDemoStore((s) => s.enterDemo)
+  const initializeDemo = useFamilyStore((s) => s.initializeDemo)
+
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
   const [needsPassword, setNeedsPassword] = useState(false)
@@ -23,6 +38,22 @@ const JoinPage = () => {
   if (initialized && familyId) {
     navigate('/', { replace: true })
     return null
+  }
+
+  const handleDemoStart = () => {
+    enterDemo()
+    initializeDemo(DEMO_FAMILY_ID, DEMO_FAMILY_CODE, DEMO_DEVICE_ID)
+
+    const activities = generateDemoActivities()
+    useActivityStore.getState().initializeDemo(activities)
+
+    const baby = generateDemoBaby()
+    useBabyStore.setState({ babies: [baby] })
+
+    const presets = generateDemoSupplementPresets()
+    useSupplementStore.setState({ presets })
+
+    navigate('/', { replace: true })
   }
 
   const isCodeValid = code.length >= MIN_CODE_LENGTH && code.length <= MAX_CODE_LENGTH
@@ -200,6 +231,22 @@ const JoinPage = () => {
             {loading ? '확인 중...' : '시작하기'}
           </Button>
         </form>
+
+        <div className="flex w-full items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">또는</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="h-12 w-full cursor-pointer gap-2 text-sm font-medium"
+          onClick={handleDemoStart}
+        >
+          <Eye className="h-4 w-4" />
+          체험해보기
+        </Button>
       </div>
     </div>
   )

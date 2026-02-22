@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2, GripVertical, LogOut, Smartphone } from 'lucide-react'
+import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2, GripVertical, LogOut, Smartphone, Eye } from 'lucide-react'
+import { useDemoStore } from '@/stores/demoStore'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -99,6 +100,7 @@ const SortablePresetItem = ({
 }
 
 const SettingsPage = () => {
+  const isDemo = useDemoStore((s) => s.isDemo)
   const familyId = useFamilyStore((s) => s.familyId)
   const familyCode = useFamilyStore((s) => s.familyCode)
   const familyPassword = useFamilyStore((s) => s.familyPassword)
@@ -316,6 +318,15 @@ const SettingsPage = () => {
     <div className="flex flex-col gap-6 py-4">
       <h2 className="text-lg font-extrabold">설정</h2>
 
+      {isDemo && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700 dark:bg-amber-950/30">
+          <Eye className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+            체험 모드로 이용 중입니다
+          </p>
+        </div>
+      )}
+
       {/* Family Code & Password */}
       <Card>
         <CardContent className="flex flex-col gap-5 px-4 py-5">
@@ -370,7 +381,7 @@ const SettingsPage = () => {
                 variant="outline"
                 className="h-12 min-w-[72px] cursor-pointer"
                 onClick={handleSavePassword}
-                disabled={savingPassword || !/^\d{4}$/.test(editPassword) || editPassword === familyPassword}
+                disabled={isDemo || savingPassword || !/^\d{4}$/.test(editPassword) || editPassword === familyPassword}
               >
                 {savingPassword ? '저장 중...' : '저장'}
               </Button>
@@ -725,16 +736,18 @@ const SettingsPage = () => {
           onClick={handleLeave}
         >
           <LogOut className="h-4 w-4" />
-          가족방 나가기
+          {isDemo ? '체험 모드 나가기' : '가족방 나가기'}
         </Button>
-        <Button
-          variant="outline"
-          className="h-12 cursor-pointer text-base gap-2 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
-          onClick={handleOpenDeleteDialog}
-        >
-          <Trash2 className="h-4 w-4" />
-          가족방 삭제하기
-        </Button>
+        {!isDemo && (
+          <Button
+            variant="outline"
+            className="h-12 cursor-pointer text-base gap-2 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={handleOpenDeleteDialog}
+          >
+            <Trash2 className="h-4 w-4" />
+            가족방 삭제하기
+          </Button>
+        )}
       </div>
 
       <AlertDialog open={showDeleteBabyDialog !== null} onOpenChange={(open) => { if (!open) setShowDeleteBabyDialog(null) }}>

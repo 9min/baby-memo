@@ -10,6 +10,8 @@ import type {
   SleepMetadata,
   MemoMetadata,
 } from '@/types/database'
+import { useDemoStore } from '@/stores/demoStore'
+import { useActivityStore } from '@/stores/activityStore'
 
 const escapeCSV = (value: string): string => {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -51,15 +53,22 @@ const formatDetail = (activity: Activity): string => {
 }
 
 export async function exportActivitiesCSV(familyId: string): Promise<void> {
-  const { data, error } = await supabase
-    .from('activities')
-    .select('*')
-    .eq('family_id', familyId)
-    .order('recorded_at', { ascending: false })
+  let activities: Activity[]
 
-  if (error) throw new Error('데이터를 불러오는데 실패했습니다.')
+  if (useDemoStore.getState().isDemo) {
+    activities = [...useActivityStore.getState()._allDemoActivities]
+      .sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())
+  } else {
+    const { data, error } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('family_id', familyId)
+      .order('recorded_at', { ascending: false })
 
-  const activities = (data as Activity[]) ?? []
+    if (error) throw new Error('데이터를 불러오는데 실패했습니다.')
+
+    activities = (data as Activity[]) ?? []
+  }
 
   const header = '날짜,시간,활동유형,상세내용,메모'
   const rows = activities.map((a) => {
