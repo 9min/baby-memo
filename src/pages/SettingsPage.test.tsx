@@ -82,8 +82,7 @@ describe('SettingsPage', () => {
 
   it('password save button is disabled when unchanged', () => {
     renderSettingsPage()
-    const saveButtons = screen.getAllByText('저장')
-    expect(saveButtons[0]).toBeDisabled()
+    expect(screen.getByText('저장')).toBeDisabled()
   })
 
   it('password save button is enabled when password changes', async () => {
@@ -93,8 +92,12 @@ describe('SettingsPage', () => {
     const pwInput = screen.getByDisplayValue('1234')
     await user.clear(pwInput)
     await user.type(pwInput, '5678')
-    const saveButtons = screen.getAllByText('저장')
-    expect(saveButtons[0]).not.toBeDisabled()
+    expect(screen.getByText('저장')).not.toBeDisabled()
+  })
+
+  it('shows per-device defaults notice', () => {
+    renderSettingsPage()
+    expect(screen.getByText(/기본값은 이 기기에만 저장됩니다/)).toBeInTheDocument()
   })
 
   it('shows solid food defaults section', () => {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2, GripVertical, LogOut } from 'lucide-react'
+import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2, GripVertical, LogOut, Smartphone } from 'lucide-react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -268,29 +268,14 @@ const SettingsPage = () => {
     }
   }
 
-  // Save defaults handlers
-  const handleSaveSolidFoodDefault = () => {
+  // Save all defaults at once
+  const handleSaveAllDefaults = () => {
     if (!familyCode) return
-    setSolidFoodDefaults(familyCode, defaultFoodName.trim())
-    showSaved('solidFood')
-  }
-
-  const handleSaveDrinkDefault = () => {
-    if (!familyCode) return
-    setDrinkDefaults(familyCode, defaultDrinkType, defaultAmountMl.trim())
-    showSaved('drink')
-  }
-
-  const handleSaveSupplementDefault = () => {
-    if (!familyCode) return
-    setSupplementDefaults(familyCode, defaultSupplementNames)
-    showSaved('supplement')
-  }
-
-  const handleSaveDiaperDefault = () => {
-    if (!familyCode) return
-    setDiaperDefaults(familyCode, defaultDiaperType, defaultDiaperAmount)
-    showSaved('diaper')
+    if (isSolidFoodChanged) setSolidFoodDefaults(familyCode, defaultFoodName.trim())
+    if (isDrinkChanged) setDrinkDefaults(familyCode, defaultDrinkType, defaultAmountMl.trim())
+    if (isSupplementChanged) setSupplementDefaults(familyCode, defaultSupplementNames)
+    if (isDiaperChanged) setDiaperDefaults(familyCode, defaultDiaperType, defaultDiaperAmount)
+    showSaved('defaults')
   }
 
   const toggleSupplementDefault = (name: string) => {
@@ -325,6 +310,7 @@ const SettingsPage = () => {
   const isDrinkChanged = defaultDrinkType !== defaults.drink.drink_type || defaultAmountMl.trim() !== defaults.drink.amount_ml
   const isSupplementChanged = JSON.stringify(defaultSupplementNames.sort()) !== JSON.stringify([...defaults.supplement.supplement_names].sort())
   const isDiaperChanged = defaultDiaperType !== defaults.diaper.diaper_type || defaultDiaperAmount !== defaults.diaper.amount
+  const isAnyDefaultChanged = isSolidFoodChanged || isDrinkChanged || isSupplementChanged || isDiaperChanged
 
   return (
     <div className="flex flex-col gap-6 py-4">
@@ -489,49 +475,47 @@ const SettingsPage = () => {
       </Card>
 
       {/* Activity Defaults */}
-      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">기본값 설정</h3>
-
-      {/* Solid Food Default */}
       <Card>
-        <CardContent className="flex flex-col gap-3 px-4 py-4">
-          <div className="flex items-center gap-2">
-            <div className="rounded-full bg-amber-50 p-1.5 dark:bg-amber-950/40">
-              <UtensilsCrossed className="h-3.5 w-3.5 text-amber-700" strokeWidth={2} />
+        <CardContent className="flex flex-col gap-5 px-4 py-5">
+          {/* Section header */}
+          <div className="flex flex-col gap-2">
+            <Label className="text-sm font-semibold">기본값 설정</Label>
+            <div className="flex items-start gap-2 rounded-lg bg-muted/50 px-3 py-2.5">
+              <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={2} />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                기본값은 이 기기에만 저장됩니다. 다른 기기에서는 별도로 설정해주세요.
+              </p>
             </div>
-            <Label className="text-sm font-semibold">먹어요</Label>
           </div>
-          <div className="flex gap-2">
+
+          <Separator />
+
+          {/* Solid Food */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-amber-50 p-1.5 dark:bg-amber-950/40">
+                <UtensilsCrossed className="h-3.5 w-3.5 text-amber-700" strokeWidth={2} />
+              </div>
+              <Label className="text-sm font-semibold">먹어요</Label>
+            </div>
             <Input
               value={defaultFoodName}
               onChange={(e) => setDefaultFoodName(e.target.value)}
               placeholder="예: 감자죽 반 그릇"
               className="h-10 text-sm"
             />
-            <Button
-              variant="outline"
-              className={cn(
-                'h-10 min-w-[56px] cursor-pointer text-xs gap-1',
-                savedSection === 'solidFood' && 'border-green-400 bg-green-50 text-green-700',
-              )}
-              onClick={handleSaveSolidFoodDefault}
-              disabled={!isSolidFoodChanged && savedSection !== 'solidFood'}
-            >
-              {savedSection === 'solidFood' ? <><Check className="h-3.5 w-3.5" />저장됨</> : '저장'}
-            </Button>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Drink Default */}
-      <Card>
-        <CardContent className="flex flex-col gap-3 px-4 py-4">
-          <div className="flex items-center gap-2">
-            <div className="rounded-full bg-sky-50 p-1.5 dark:bg-sky-950/40">
-              <GlassWater className="h-3.5 w-3.5 text-sky-700" strokeWidth={2} />
-            </div>
-            <Label className="text-sm font-semibold">마셔요</Label>
-          </div>
+          <Separator />
+
+          {/* Drink */}
           <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-sky-50 p-1.5 dark:bg-sky-950/40">
+                <GlassWater className="h-3.5 w-3.5 text-sky-700" strokeWidth={2} />
+              </div>
+              <Label className="text-sm font-semibold">마셔요</Label>
+            </div>
             <div className="grid grid-cols-3 gap-2">
               {DRINK_TYPES.map((dt) => (
                 <button
@@ -549,122 +533,95 @@ const SettingsPage = () => {
                 </button>
               ))}
             </div>
+            <Input
+              type="number"
+              inputMode="numeric"
+              value={defaultAmountMl}
+              onChange={(e) => setDefaultAmountMl(e.target.value)}
+              placeholder="ml (예: 100)"
+              className="h-10 text-sm"
+            />
+          </div>
+
+          <Separator />
+
+          {/* Supplement */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-violet-50 p-1.5 dark:bg-violet-950/40">
+                <Pill className="h-3.5 w-3.5 text-violet-700" strokeWidth={2} />
+              </div>
+              <Label className="text-sm font-semibold">영양제</Label>
+            </div>
+
+            {/* Add new preset */}
             <div className="flex gap-2">
               <Input
-                type="number"
-                inputMode="numeric"
-                value={defaultAmountMl}
-                onChange={(e) => setDefaultAmountMl(e.target.value)}
-                placeholder="ml (예: 100)"
+                value={newSupplementName}
+                onChange={(e) => setNewSupplementName(e.target.value)}
+                placeholder="영양제 이름 추가"
                 className="h-10 text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddSupplement()
+                }}
               />
               <Button
                 variant="outline"
-                className={cn(
-                  'h-10 min-w-[56px] cursor-pointer text-xs gap-1',
-                  savedSection === 'drink' && 'border-green-400 bg-green-50 text-green-700',
-                )}
-                onClick={handleSaveDrinkDefault}
-                disabled={!isDrinkChanged && savedSection !== 'drink'}
+                className="h-10 min-w-[56px] cursor-pointer gap-1 text-xs"
+                onClick={handleAddSupplement}
+                disabled={addingSupplement || !newSupplementName.trim()}
               >
-                {savedSection === 'drink' ? <><Check className="h-3.5 w-3.5" />저장됨</> : '저장'}
+                <Plus className="h-3.5 w-3.5" />
+                추가
               </Button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Supplement Presets + Default */}
-      <Card>
-        <CardContent className="flex flex-col gap-3 px-4 py-4">
-          <div className="flex items-center gap-2">
-            <div className="rounded-full bg-violet-50 p-1.5 dark:bg-violet-950/40">
-              <Pill className="h-3.5 w-3.5 text-violet-700" strokeWidth={2} />
-            </div>
-            <Label className="text-sm font-semibold">영양제</Label>
-          </div>
-
-          {/* Add new preset */}
-          <div className="flex gap-2">
-            <Input
-              value={newSupplementName}
-              onChange={(e) => setNewSupplementName(e.target.value)}
-              placeholder="영양제 이름 추가"
-              className="h-10 text-sm"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleAddSupplement()
-              }}
-            />
-            <Button
-              variant="outline"
-              className="h-10 min-w-[56px] cursor-pointer gap-1 text-xs"
-              onClick={handleAddSupplement}
-              disabled={addingSupplement || !newSupplementName.trim()}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              추가
-            </Button>
-          </div>
-
-          {/* Preset list with drag & drop + default check */}
-          {presets.length > 0 && (
-            <>
-              <Separator />
-              <Label className="text-xs text-muted-foreground">기본 선택 (새 기록 시 자동 체크)</Label>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={presets.map((p) => p.id)}
-                  strategy={verticalListSortingStrategy}
+            {/* Preset list with drag & drop + default check */}
+            {presets.length > 0 && (
+              <>
+                <Label className="text-xs text-muted-foreground">기본 선택 (새 기록 시 자동 체크)</Label>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
                 >
-                  <div className="flex flex-col gap-2">
-                    {presets.map((preset) => (
-                      <SortablePresetItem
-                        key={preset.id}
-                        preset={preset}
-                        isChecked={defaultSupplementNames.includes(preset.name)}
-                        onToggle={() => toggleSupplementDefault(preset.name)}
-                        onDelete={() => deletePreset(preset.id)}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-              <Button
-                variant="outline"
-                className={cn(
-                  'h-10 cursor-pointer text-xs gap-1',
-                  savedSection === 'supplement' && 'border-green-400 bg-green-50 text-green-700',
-                )}
-                onClick={handleSaveSupplementDefault}
-                disabled={!isSupplementChanged && savedSection !== 'supplement'}
-              >
-                {savedSection === 'supplement' ? <><Check className="h-3.5 w-3.5" />저장됨</> : '기본값 저장'}
-              </Button>
-            </>
-          )}
+                  <SortableContext
+                    items={presets.map((p) => p.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="flex flex-col gap-2">
+                      {presets.map((preset) => (
+                        <SortablePresetItem
+                          key={preset.id}
+                          preset={preset}
+                          isChecked={defaultSupplementNames.includes(preset.name)}
+                          onToggle={() => toggleSupplementDefault(preset.name)}
+                          onDelete={() => deletePreset(preset.id)}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </>
+            )}
 
-          {presets.length === 0 && (
-            <p className="text-center text-xs text-muted-foreground">
-              등록된 영양제가 없습니다
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Diaper Default */}
-      <Card>
-        <CardContent className="flex flex-col gap-3 px-4 py-4">
-          <div className="flex items-center gap-2">
-            <div className="rounded-full bg-emerald-50 p-1.5 dark:bg-emerald-950/40">
-              <Droplets className="h-3.5 w-3.5 text-emerald-700" strokeWidth={2} />
-            </div>
-            <Label className="text-sm font-semibold">기저귀</Label>
+            {presets.length === 0 && (
+              <p className="text-center text-xs text-muted-foreground">
+                등록된 영양제가 없습니다
+              </p>
+            )}
           </div>
+
+          <Separator />
+
+          {/* Diaper */}
           <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-emerald-50 p-1.5 dark:bg-emerald-950/40">
+                <Droplets className="h-3.5 w-3.5 text-emerald-700" strokeWidth={2} />
+              </div>
+              <Label className="text-sm font-semibold">기저귀</Label>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               {DIAPER_TYPES.map((dt) => (
                 <button
@@ -699,18 +656,22 @@ const SettingsPage = () => {
                 </button>
               ))}
             </div>
-            <Button
-              variant="outline"
-              className={cn(
-                'h-10 cursor-pointer text-xs gap-1',
-                savedSection === 'diaper' && 'border-green-400 bg-green-50 text-green-700',
-              )}
-              onClick={handleSaveDiaperDefault}
-              disabled={!isDiaperChanged && savedSection !== 'diaper'}
-            >
-              {savedSection === 'diaper' ? <><Check className="h-3.5 w-3.5" />저장됨</> : '저장'}
-            </Button>
           </div>
+
+          <Separator />
+
+          {/* Unified save button */}
+          <Button
+            variant="outline"
+            className={cn(
+              'h-11 cursor-pointer text-sm gap-1.5',
+              savedSection === 'defaults' && 'border-green-400 bg-green-50 text-green-700 dark:bg-green-950/30 dark:border-green-600 dark:text-green-400',
+            )}
+            onClick={handleSaveAllDefaults}
+            disabled={!isAnyDefaultChanged && savedSection !== 'defaults'}
+          >
+            {savedSection === 'defaults' ? <><Check className="h-4 w-4" />저장됨</> : '기본값 저장'}
+          </Button>
         </CardContent>
       </Card>
 
