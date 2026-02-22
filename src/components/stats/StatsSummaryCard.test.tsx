@@ -15,7 +15,7 @@ describe('StatsSummaryCard', () => {
   it('renders summary labels', () => {
     render(<StatsSummaryCard />)
     expect(screen.getByText('전체 기록')).toBeInTheDocument()
-    expect(screen.getByText('음료 섭취')).toBeInTheDocument()
+    expect(screen.getByText('수분 섭취')).toBeInTheDocument()
     expect(screen.getByText('수면')).toBeInTheDocument()
   })
 

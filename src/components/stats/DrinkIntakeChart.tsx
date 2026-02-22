@@ -23,7 +23,7 @@ const DrinkIntakeChart = memo(() => {
     return (
       <Card className="py-4">
         <CardHeader className="px-4 py-0">
-          <CardTitle className="text-sm">음료 섭취량 (ml)</CardTitle>
+          <CardTitle className="text-sm">수분 섭취량</CardTitle>
         </CardHeader>
         <CardContent className="px-4">
           <div className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">
@@ -37,7 +37,7 @@ const DrinkIntakeChart = memo(() => {
   return (
     <Card className="py-4">
       <CardHeader className="px-4 py-0">
-        <CardTitle className="text-sm">음료 섭취량 (ml)</CardTitle>
+        <CardTitle className="text-sm">수분 섭취량</CardTitle>
       </CardHeader>
       <CardContent className="px-4">
         <ResponsiveContainer width="100%" height={200}>
@@ -56,8 +56,6 @@ const DrinkIntakeChart = memo(() => {
                 name={DRINK_TYPE_LABELS[type]}
                 stackId="a"
                 fill={DRINK_CHART_COLORS[type]}
-                stroke={type === 'milk' ? '#d1d5db' : undefined}
-                strokeWidth={type === 'milk' ? 1 : 0}
                 radius={type === 'water' ? [2, 2, 0, 0] : undefined}
               />
             ))}

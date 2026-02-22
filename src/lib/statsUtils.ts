@@ -147,8 +147,8 @@ export const ACTIVITY_CHART_COLORS: Record<ActivityType, string> = {
 
 export const DRINK_CHART_COLORS: Record<DrinkType, string> = {
   formula: '#f59e0b',
-  milk: '#ffffff',
-  water: '#0ea5e9',
+  milk: '#c084fc',
+  water: '#38bdf8',
 }
 
 export function formatXAxisLabel(dateStr: string, period: StatsPeriod): string {
