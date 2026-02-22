@@ -26,3 +26,9 @@ supabase/.temp/
 *.njsproj
 *.sln
 *.sw?
+
+# Skill packages
+*.skill
+
+# Windows artifacts
+nul
