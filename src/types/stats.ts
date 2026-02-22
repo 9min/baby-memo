@@ -23,3 +23,10 @@ export interface DailySleepDuration {
   date: string
   minutes: number
 }
+
+export interface SleepSession {
+  startMinute: number  // 0~1439 (자정 기준 분)
+  endMinute: number    // endMinute > startMinute 보장 (자정 넘기면 +1440)
+  startLabel: string   // "21:30"
+  endLabel: string     // "06:15"
+}

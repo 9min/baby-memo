@@ -15,6 +15,9 @@ vi.mock('recharts', () => ({
   Tooltip: () => <div />,
   Legend: () => <div />,
   LabelList: () => <div />,
+  PieChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Pie: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  Cell: () => <div />,
 }))
 
 describe('StatsPage', () => {

@@ -7,7 +7,7 @@ import {
 } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import type { Activity, ActivityType, DrinkType, DrinkMetadata, SleepMetadata } from '@/types/database'
-import type { StatsPeriod, DateRange, DailyActivityCount, DailyDrinkIntake, DailySleepDuration } from '@/types/stats'
+import type { StatsPeriod, DateRange, DailyActivityCount, DailyDrinkIntake, DailySleepDuration, SleepSession } from '@/types/stats'
 
 export function getDateRange(period: StatsPeriod, anchor: Date): DateRange {
   switch (period) {
@@ -134,6 +134,39 @@ export function aggregateSleepDuration(
     const key = format(day, 'yyyy-MM-dd')
     return { date: key, minutes: map.get(key) ?? 0 }
   })
+}
+
+export function extractSleepSessions(
+  activities: Activity[],
+  dateRange: DateRange,
+): SleepSession[] {
+  const dayStart = startOfDay(dateRange.start)
+
+  return activities
+    .filter((a) => a.type === 'sleep' && (a.metadata as SleepMetadata).end_time)
+    .map((a) => {
+      const meta = a.metadata as SleepMetadata
+      const start = new Date(a.recorded_at)
+      const end = new Date(meta.end_time!)
+
+      const startMinute = (start.getHours() * 60) + start.getMinutes()
+      let endMinute = (end.getHours() * 60) + end.getMinutes()
+
+      // 다음날로 넘어가면 +1440
+      if (end.getTime() >= dayStart.getTime() + 86400000 || endMinute <= startMinute) {
+        endMinute += 1440
+      }
+
+      // 최대 1440 clamp
+      endMinute = Math.min(endMinute, 1440)
+
+      return {
+        startMinute,
+        endMinute,
+        startLabel: format(start, 'HH:mm'),
+        endLabel: format(end, 'HH:mm'),
+      }
+    })
 }
 
 export const ACTIVITY_CHART_COLORS: Record<ActivityType, string> = {

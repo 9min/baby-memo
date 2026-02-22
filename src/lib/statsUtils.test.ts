@@ -6,6 +6,7 @@ import {
   aggregateActivityCounts,
   aggregateDrinkIntake,
   aggregateSleepDuration,
+  extractSleepSessions,
   ACTIVITY_CHART_COLORS,
   DRINK_CHART_COLORS,
   formatXAxisLabel,
@@ -250,6 +251,96 @@ describe('aggregateSleepDuration', () => {
     ]
     const result = aggregateSleepDuration(activities, range)
     expect(result[0].minutes).toBe(0)
+  })
+})
+
+describe('extractSleepSessions', () => {
+  beforeEach(() => {
+    resetMockActivityCounter()
+  })
+
+  it('returns empty array when no sleep activities', () => {
+    const range = getDateRange('daily', new Date('2025-01-15'))
+    const result = extractSleepSessions([], range)
+    expect(result).toHaveLength(0)
+  })
+
+  it('extracts sleep session with correct minutes', () => {
+    const range = getDateRange('daily', new Date('2025-01-15'))
+    const activities = [
+      createMockActivity({
+        type: 'sleep',
+        recorded_at: '2025-01-15T13:00:00',
+        metadata: { note: '낮잠', end_time: '2025-01-15T14:30:00' } satisfies SleepMetadata,
+      }),
+    ]
+    const result = extractSleepSessions(activities, range)
+    expect(result).toHaveLength(1)
+    expect(result[0].startMinute).toBe(780) // 13 * 60
+    expect(result[0].endMinute).toBe(870) // 14 * 60 + 30
+    expect(result[0].startLabel).toBe('13:00')
+    expect(result[0].endLabel).toBe('14:30')
+  })
+
+  it('handles overnight sleep with clamp to 1440', () => {
+    const range = getDateRange('daily', new Date('2025-01-15'))
+    const activities = [
+      createMockActivity({
+        type: 'sleep',
+        recorded_at: '2025-01-15T21:30:00',
+        metadata: { note: '', end_time: '2025-01-16T06:15:00' } satisfies SleepMetadata,
+      }),
+    ]
+    const result = extractSleepSessions(activities, range)
+    expect(result).toHaveLength(1)
+    expect(result[0].startMinute).toBe(1290) // 21 * 60 + 30
+    expect(result[0].endMinute).toBe(1440) // clamped
+    expect(result[0].startLabel).toBe('21:30')
+    expect(result[0].endLabel).toBe('06:15')
+  })
+
+  it('skips sleep records without end_time', () => {
+    const range = getDateRange('daily', new Date('2025-01-15'))
+    const activities = [
+      createMockActivity({
+        type: 'sleep',
+        recorded_at: '2025-01-15T21:00:00',
+        metadata: { note: '', end_time: null } satisfies SleepMetadata,
+      }),
+    ]
+    const result = extractSleepSessions(activities, range)
+    expect(result).toHaveLength(0)
+  })
+
+  it('skips non-sleep activities', () => {
+    const range = getDateRange('daily', new Date('2025-01-15'))
+    const activities = [
+      createMockActivity({ type: 'drink', recorded_at: '2025-01-15T08:00:00' }),
+    ]
+    const result = extractSleepSessions(activities, range)
+    expect(result).toHaveLength(0)
+  })
+
+  it('extracts multiple sleep sessions', () => {
+    const range = getDateRange('daily', new Date('2025-01-15'))
+    const activities = [
+      createMockActivity({
+        type: 'sleep',
+        recorded_at: '2025-01-15T10:00:00',
+        metadata: { note: '오전 낮잠', end_time: '2025-01-15T11:00:00' } satisfies SleepMetadata,
+      }),
+      createMockActivity({
+        type: 'sleep',
+        recorded_at: '2025-01-15T14:00:00',
+        metadata: { note: '오후 낮잠', end_time: '2025-01-15T15:30:00' } satisfies SleepMetadata,
+      }),
+    ]
+    const result = extractSleepSessions(activities, range)
+    expect(result).toHaveLength(2)
+    expect(result[0].startMinute).toBe(600) // 10 * 60
+    expect(result[0].endMinute).toBe(660) // 11 * 60
+    expect(result[1].startMinute).toBe(840) // 14 * 60
+    expect(result[1].endMinute).toBe(930) // 15 * 60 + 30
   })
 })
 
