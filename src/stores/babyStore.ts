@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import type { Baby } from '@/types/database'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import { useDemoStore } from '@/stores/demoStore'
 
 interface BabyState {
   babies: Baby[]
@@ -21,6 +22,11 @@ export const useBabyStore = create<BabyState>((set, get) => ({
   channel: null,
 
   fetchBabies: async (familyId: string) => {
+    if (useDemoStore.getState().isDemo) {
+      set({ loading: false })
+      return
+    }
+
     set({ loading: true })
     const { data } = await supabase
       .from('babies')
@@ -32,6 +38,18 @@ export const useBabyStore = create<BabyState>((set, get) => ({
   },
 
   addBaby: async (familyId: string, name: string, birthdate: string) => {
+    if (useDemoStore.getState().isDemo) {
+      const newBaby: Baby = {
+        id: `demo-baby-${Date.now()}`,
+        family_id: familyId,
+        name,
+        birthdate,
+        created_at: new Date().toISOString(),
+      }
+      set((state) => ({ babies: [...state.babies, newBaby] }))
+      return
+    }
+
     const { error } = await supabase
       .from('babies')
       .insert({ family_id: familyId, name, birthdate })
@@ -40,6 +58,11 @@ export const useBabyStore = create<BabyState>((set, get) => ({
   },
 
   deleteBaby: async (id: string) => {
+    if (useDemoStore.getState().isDemo) {
+      set((state) => ({ babies: state.babies.filter((b) => b.id !== id) }))
+      return
+    }
+
     const prev = get().babies
     set((state) => ({
       babies: state.babies.filter((b) => b.id !== id),
@@ -57,6 +80,8 @@ export const useBabyStore = create<BabyState>((set, get) => ({
   },
 
   subscribe: (familyId: string) => {
+    if (useDemoStore.getState().isDemo) return
+
     const existing = get().channel
     if (existing) {
       supabase.removeChannel(existing)

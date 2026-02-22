@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import type { Activity, ActivityType, ActivityMetadata } from '@/types/database'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+import { useDemoStore } from '@/stores/demoStore'
 
 interface ActivityState {
   activities: Activity[]
@@ -10,7 +11,9 @@ interface ActivityState {
   selectedDate: Date
   channel: RealtimeChannel | null
   monthlyActivityDates: Record<string, number>
+  _allDemoActivities: Activity[]
 
+  initializeDemo: (activities: Activity[]) => void
   setSelectedDate: (date: Date) => void
   fetchActivities: (familyId: string, date: Date) => Promise<void>
   fetchRecentActivities: (familyId: string) => Promise<void>
@@ -40,6 +43,11 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
   selectedDate: new Date(),
   channel: null,
   monthlyActivityDates: {},
+  _allDemoActivities: [],
+
+  initializeDemo: (activities: Activity[]) => {
+    set({ _allDemoActivities: activities })
+  },
 
   setSelectedDate: (date: Date) => {
     set({ selectedDate: date })
@@ -51,6 +59,17 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
     startOfDay.setHours(0, 0, 0, 0)
     const endOfDay = new Date(date)
     endOfDay.setHours(23, 59, 59, 999)
+
+    if (useDemoStore.getState().isDemo) {
+      const startMs = startOfDay.getTime()
+      const endMs = endOfDay.getTime()
+      const filtered = get()._allDemoActivities.filter((a) => {
+        const t = new Date(a.recorded_at).getTime()
+        return t >= startMs && t <= endMs
+      })
+      set({ activities: filtered, loading: false })
+      return
+    }
 
     const { data } = await supabase
       .from('activities')
@@ -64,6 +83,14 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
   },
 
   fetchRecentActivities: async (familyId: string) => {
+    if (useDemoStore.getState().isDemo) {
+      const recent = [...get()._allDemoActivities]
+        .sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())
+        .slice(0, 5)
+      set({ recentActivities: recent })
+      return
+    }
+
     const { data } = await supabase
       .from('activities')
       .select('*')
@@ -77,6 +104,21 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
   fetchMonthlyActivityDates: async (familyId: string, year: number, month: number) => {
     const startOfMonth = new Date(year, month, 1)
     const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999)
+
+    if (useDemoStore.getState().isDemo) {
+      const startMs = startOfMonth.getTime()
+      const endMs = endOfMonth.getTime()
+      const counts: Record<string, number> = {}
+      for (const a of get()._allDemoActivities) {
+        const t = new Date(a.recorded_at).getTime()
+        if (t >= startMs && t <= endMs) {
+          const dateKey = a.recorded_at.slice(0, 10)
+          counts[dateKey] = (counts[dateKey] ?? 0) + 1
+        }
+      }
+      set({ monthlyActivityDates: counts })
+      return
+    }
 
     const { data } = await supabase
       .from('activities')
@@ -97,6 +139,28 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
   },
 
   recordActivity: async ({ familyId, deviceId, type, recordedAt, metadata, memo }) => {
+    if (useDemoStore.getState().isDemo) {
+      const newActivity: Activity = {
+        id: `demo-new-${Date.now()}`,
+        family_id: familyId,
+        device_id: deviceId,
+        type,
+        recorded_at: recordedAt,
+        memo: memo || null,
+        metadata,
+        created_at: new Date().toISOString(),
+      }
+      set((state) => ({
+        _allDemoActivities: [...state._allDemoActivities, newActivity]
+          .sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()),
+      }))
+      // Refresh current view
+      const selectedDate = get().selectedDate
+      await get().fetchActivities(familyId, selectedDate)
+      await get().fetchRecentActivities(familyId)
+      return
+    }
+
     const { error } = await supabase
       .from('activities')
       .insert({
@@ -112,6 +176,21 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
   },
 
   updateActivity: async ({ activityId, recordedAt, metadata }) => {
+    if (useDemoStore.getState().isDemo) {
+      set((state) => ({
+        _allDemoActivities: state._allDemoActivities.map((a) =>
+          a.id === activityId ? { ...a, recorded_at: recordedAt, metadata } : a,
+        ),
+        activities: state.activities
+          .map((a) => (a.id === activityId ? { ...a, recorded_at: recordedAt, metadata } : a))
+          .sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()),
+        recentActivities: state.recentActivities
+          .map((a) => (a.id === activityId ? { ...a, recorded_at: recordedAt, metadata } : a))
+          .sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime()),
+      }))
+      return
+    }
+
     const { error } = await supabase
       .from('activities')
       .update({
@@ -124,6 +203,15 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
   },
 
   deleteActivity: async (activityId: string) => {
+    if (useDemoStore.getState().isDemo) {
+      set((state) => ({
+        _allDemoActivities: state._allDemoActivities.filter((a) => a.id !== activityId),
+        activities: state.activities.filter((a) => a.id !== activityId),
+        recentActivities: state.recentActivities.filter((a) => a.id !== activityId),
+      }))
+      return
+    }
+
     const prev = { activities: get().activities, recentActivities: get().recentActivities }
     set((state) => ({
       activities: state.activities.filter((a) => a.id !== activityId),
@@ -142,6 +230,8 @@ export const useActivityStore = create<ActivityState>((set, get) => ({
   },
 
   subscribe: (familyId: string) => {
+    if (useDemoStore.getState().isDemo) return
+
     const existing = get().channel
     if (existing) {
       supabase.removeChannel(existing)

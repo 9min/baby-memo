@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { getDeviceId } from '@/lib/deviceUtils'
 import { FAMILY_CODE_KEY } from '@/lib/constants'
 import { useDefaultsStore } from '@/stores/defaultsStore'
+import { useDemoStore } from '@/stores/demoStore'
 
 function generatePassword(): string {
   return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
@@ -16,6 +17,7 @@ interface FamilyState {
   initialized: boolean
 
   initialize: () => Promise<void>
+  initializeDemo: (familyId: string, familyCode: string, deviceId: string) => void
   checkFamilyExists: (code: string) => Promise<boolean>
   joinOrCreate: (code: string, password?: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
@@ -29,6 +31,16 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   familyPassword: null,
   deviceId: getDeviceId(),
   initialized: false,
+
+  initializeDemo: (familyId: string, familyCode: string, deviceId: string) => {
+    set({
+      familyId,
+      familyCode,
+      familyPassword: '0000',
+      deviceId,
+      initialized: true,
+    })
+  },
 
   initialize: async () => {
     const savedCode = localStorage.getItem(FAMILY_CODE_KEY)
@@ -141,6 +153,8 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   },
 
   updatePassword: async (password: string) => {
+    if (useDemoStore.getState().isDemo) return
+
     const { familyId } = get()
     if (!familyId) return
 
@@ -157,6 +171,12 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   },
 
   leave: async () => {
+    if (useDemoStore.getState().isDemo) {
+      useDemoStore.getState().exitDemo()
+      set({ familyId: null, familyCode: null, familyPassword: null })
+      return
+    }
+
     const { familyId, familyCode, deviceId } = get()
 
     if (familyCode) {
@@ -176,6 +196,8 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   },
 
   deleteFamily: async (password: string) => {
+    if (useDemoStore.getState().isDemo) return
+
     const { familyId, familyCode, familyPassword, deviceId } = get()
 
     if (password !== familyPassword) {
