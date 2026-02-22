@@ -7,10 +7,11 @@ import { useStatsStore } from '@/stores/statsStore'
 vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   BarChart: ({ children }: { children: React.ReactNode }) => <div data-testid="bar-chart">{children}</div>,
-  Bar: () => <div />,
+  Bar: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   XAxis: () => <div />,
   YAxis: () => <div />,
   Tooltip: () => <div />,
+  LabelList: () => <div />,
 }))
 
 describe('SleepDurationChart', () => {
@@ -23,7 +24,7 @@ describe('SleepDurationChart', () => {
 
   it('renders chart title', () => {
     render(<SleepDurationChart />)
-    expect(screen.getByText('수면 시간 (h)')).toBeInTheDocument()
+    expect(screen.getByText('수면 시간')).toBeInTheDocument()
   })
 
   it('shows empty message when no data', () => {

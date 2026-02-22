@@ -24,7 +24,7 @@ describe('DrinkIntakeChart', () => {
 
   it('renders chart title', () => {
     render(<DrinkIntakeChart />)
-    expect(screen.getByText('음료 섭취량 (ml)')).toBeInTheDocument()
+    expect(screen.getByText('수분 섭취량')).toBeInTheDocument()
   })
 
   it('shows empty message when no data', () => {

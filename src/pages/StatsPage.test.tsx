@@ -9,11 +9,12 @@ import { resetAllStores } from '@/test/helpers/zustandTestUtils'
 vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   BarChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Bar: () => <div />,
+  Bar: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   XAxis: () => <div />,
   YAxis: () => <div />,
   Tooltip: () => <div />,
   Legend: () => <div />,
+  LabelList: () => <div />,
 }))
 
 describe('StatsPage', () => {
@@ -42,7 +43,7 @@ describe('StatsPage', () => {
   it('renders summary labels when not loading', () => {
     render(<StatsPage />)
     expect(screen.getByText('전체 기록')).toBeInTheDocument()
-    expect(screen.getByText('음료 섭취')).toBeInTheDocument()
+    expect(screen.getByText('수분 섭취')).toBeInTheDocument()
     expect(screen.getByText('수면')).toBeInTheDocument()
   })
 
@@ -66,16 +67,16 @@ describe('StatsPage', () => {
 
   it('shows chart titles when not loading', () => {
     render(<StatsPage />)
-    expect(screen.getByText('활동 횟수')).toBeInTheDocument()
-    expect(screen.getByText('음료 섭취량 (ml)')).toBeInTheDocument()
-    expect(screen.getByText('수면 시간 (h)')).toBeInTheDocument()
+    expect(screen.getByText('활동 요약')).toBeInTheDocument()
+    expect(screen.getByText('수분 섭취량')).toBeInTheDocument()
+    expect(screen.getByText('수면 시간')).toBeInTheDocument()
   })
 
   it('hides charts when loading', () => {
     useStatsStore.setState({ loading: true })
     render(<StatsPage />)
-    expect(screen.queryByText('활동 횟수')).not.toBeInTheDocument()
-    expect(screen.queryByText('음료 섭취량 (ml)')).not.toBeInTheDocument()
-    expect(screen.queryByText('수면 시간 (h)')).not.toBeInTheDocument()
+    expect(screen.queryByText('활동 요약')).not.toBeInTheDocument()
+    expect(screen.queryByText('수분 섭취량')).not.toBeInTheDocument()
+    expect(screen.queryByText('수면 시간')).not.toBeInTheDocument()
   })
 })
