@@ -293,28 +293,8 @@ describe('familyStore', () => {
     })
   })
 
-  describe('getDeviceCount', () => {
-    it('returns 0 when no familyId', async () => {
-      useFamilyStore.setState({ familyId: null })
-      const count = await useFamilyStore.getState().getDeviceCount()
-      expect(count).toBe(0)
-    })
-
-    it('returns count from supabase', async () => {
-      useFamilyStore.setState({ familyId: 'fam-1' })
-      mockFrom.mockReturnValue(
-        mockQueryBuilder({
-          eq: vi.fn().mockResolvedValue({ count: 3 }),
-        }),
-      )
-
-      const count = await useFamilyStore.getState().getDeviceCount()
-      expect(count).toBe(3)
-    })
-  })
-
   describe('leave', () => {
-    it('clears store state', async () => {
+    it('deletes device and clears store state', async () => {
       useFamilyStore.setState({
         familyId: 'fam-1',
         familyCode: 'TESTCODE',
@@ -322,19 +302,43 @@ describe('familyStore', () => {
       })
       localStorage.setItem(FAMILY_CODE_KEY, 'TESTCODE')
 
-      let callCount = 0
-      mockFrom.mockImplementation(() => {
-        callCount++
-        if (callCount === 2) {
-          // Device count check
-          return mockQueryBuilder({
-            eq: vi.fn().mockResolvedValue({ count: 0 }),
-          })
-        }
-        return mockQueryBuilder()
-      })
+      mockFrom.mockReturnValue(mockQueryBuilder())
 
       await useFamilyStore.getState().leave()
+      expect(useFamilyStore.getState().familyId).toBeNull()
+      expect(useFamilyStore.getState().familyCode).toBeNull()
+      expect(useFamilyStore.getState().familyPassword).toBeNull()
+      expect(localStorage.getItem(FAMILY_CODE_KEY)).toBeNull()
+    })
+  })
+
+  describe('deleteFamily', () => {
+    it('throws on wrong password and keeps state', async () => {
+      useFamilyStore.setState({
+        familyId: 'fam-1',
+        familyCode: 'TESTCODE',
+        familyPassword: '1234',
+      })
+
+      await expect(
+        useFamilyStore.getState().deleteFamily('9999'),
+      ).rejects.toThrow('비밀번호가 일치하지 않습니다.')
+
+      expect(useFamilyStore.getState().familyId).toBe('fam-1')
+      expect(useFamilyStore.getState().familyCode).toBe('TESTCODE')
+    })
+
+    it('deletes family and clears state on correct password', async () => {
+      useFamilyStore.setState({
+        familyId: 'fam-1',
+        familyCode: 'TESTCODE',
+        familyPassword: '1234',
+      })
+      localStorage.setItem(FAMILY_CODE_KEY, 'TESTCODE')
+
+      mockFrom.mockReturnValue(mockQueryBuilder())
+
+      await useFamilyStore.getState().deleteFamily('1234')
       expect(useFamilyStore.getState().familyId).toBeNull()
       expect(useFamilyStore.getState().familyCode).toBeNull()
       expect(useFamilyStore.getState().familyPassword).toBeNull()

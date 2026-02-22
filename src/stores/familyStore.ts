@@ -19,8 +19,8 @@ interface FamilyState {
   checkFamilyExists: (code: string) => Promise<boolean>
   joinOrCreate: (code: string, password?: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
-  getDeviceCount: () => Promise<number>
   leave: () => Promise<void>
+  deleteFamily: (password: string) => Promise<void>
 }
 
 export const useFamilyStore = create<FamilyState>((set, get) => ({
@@ -156,18 +156,6 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     set({ familyPassword: password })
   },
 
-  getDeviceCount: async () => {
-    const { familyId } = get()
-    if (!familyId) return 0
-
-    const { count } = await supabase
-      .from('devices')
-      .select('*', { count: 'exact', head: true })
-      .eq('family_id', familyId)
-
-    return count ?? 0
-  },
-
   leave: async () => {
     const { familyId, familyCode, deviceId } = get()
 
@@ -176,26 +164,39 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     }
 
     if (familyId) {
-      // Delete this device from the family
+      await supabase
+        .from('devices')
+        .delete()
+        .eq('device_id', deviceId)
+        .eq('family_id', familyId)
+    }
+
+    localStorage.removeItem(FAMILY_CODE_KEY)
+    set({ familyId: null, familyCode: null, familyPassword: null })
+  },
+
+  deleteFamily: async (password: string) => {
+    const { familyId, familyCode, familyPassword, deviceId } = get()
+
+    if (password !== familyPassword) {
+      throw new Error('비밀번호가 일치하지 않습니다.')
+    }
+
+    if (familyCode) {
+      useDefaultsStore.getState().clearDefaults(familyCode)
+    }
+
+    if (familyId) {
       await supabase
         .from('devices')
         .delete()
         .eq('device_id', deviceId)
         .eq('family_id', familyId)
 
-      // Check if any devices remain in this family
-      const { count } = await supabase
-        .from('devices')
-        .select('*', { count: 'exact', head: true })
-        .eq('family_id', familyId)
-
-      // If no devices remain, delete the family (cascades to activities, supplement_presets)
-      if (!count) {
-        await supabase
-          .from('families')
-          .delete()
-          .eq('id', familyId)
-      }
+      await supabase
+        .from('families')
+        .delete()
+        .eq('id', familyId)
     }
 
     localStorage.removeItem(FAMILY_CODE_KEY)
