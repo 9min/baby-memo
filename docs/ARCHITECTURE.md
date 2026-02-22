@@ -89,7 +89,7 @@ activities
 ├── id          UUID (PK, auto)
 ├── family_id   UUID (FK → families.id, CASCADE)
 ├── device_id   TEXT
-├── type        TEXT (solid_food | drink | supplement | diaper | sleep)
+├── type        TEXT (solid_food | drink | supplement | diaper | sleep | memo)
 ├── recorded_at TIMESTAMPTZ
 ├── metadata    JSONB (타입별 상세 데이터)
 └── created_at  TIMESTAMPTZ
@@ -105,6 +105,7 @@ supplement_presets
 ├── id          UUID (PK, auto)
 ├── family_id   UUID (FK → families.id, CASCADE)
 ├── name        TEXT
+├── sort_order  INTEGER (DEFAULT 0)
 └── created_at  TIMESTAMPTZ
 ```
 
@@ -131,6 +132,9 @@ supplement_presets
 
 // sleep
 { startTime: string, endTime?: string, memo?: string }
+
+// memo
+{ content?: string }
 ```
 
 ### 보안 (MVP)
@@ -162,7 +166,7 @@ FamilyGuard 렌더링
 ```
 familyStore
 ├── State: familyId, familyCode, familyPassword, deviceId, initialized
-├── Actions: initialize, checkFamilyExists, joinOrCreate, updatePassword, getDeviceCount, leave
+├── Actions: initialize, checkFamilyExists, joinOrCreate, updatePassword, leave, deleteFamily
 
 activityStore
 ├── State: activities, selectedDate, loading, monthlyActivityDates
@@ -201,14 +205,14 @@ App
 │           └── AppShell
 │               ├── Outlet (페이지 컨텐츠)
 │               │   ├── HomePage
-│               │   │   ├── ActivityButton (x5)
-│               │   │   ├── SolidFoodSheet / DrinkSheet / SupplementSheet / DiaperSheet / SleepSheet
+│               │   │   ├── ActivityButton (x6)
+│               │   │   ├── SolidFoodSheet / DrinkSheet / SupplementSheet / DiaperSheet / SleepSheet / MemoSheet
 │               │   │   └── ActivityCard
 │               │   ├── TimelinePage
 │               │   │   ├── DateNavigator
 │               │   │   ├── MonthlyCalendar (월별 뷰)
 │               │   │   ├── ActivityCard
-│               │   │   └── SolidFoodSheet / DrinkSheet / SupplementSheet / DiaperSheet / SleepSheet
+│               │   │   └── SolidFoodSheet / DrinkSheet / SupplementSheet / DiaperSheet / SleepSheet / MemoSheet
 │               │   ├── StatsPage
 │               │   │   ├── PeriodTabs
 │               │   │   ├── StatsDateNavigator
@@ -231,7 +235,7 @@ App
 src/
 ├── components/
 │   ├── activity/      # 활동 기록 관련 (ActivityButton, ActivityCard, DateNavigator,
-│   │                  #   MonthlyCalendar, TimePicker, *Sheet 5종)
+│   │                  #   MonthlyCalendar, TimePicker, *Sheet 6종)
 │   ├── family/        # 가족 시스템 (FamilyGuard)
 │   ├── layout/        # 레이아웃 (AppShell, BottomNav, InstallPrompt)
 │   ├── stats/         # 통계 차트 (ActivityCountChart, DrinkIntakeChart,

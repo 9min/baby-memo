@@ -89,7 +89,7 @@ gh pr create --title "feat: add feature" --body "..."
 ## Test plan
 - [ ] npm run build 성공
 - [ ] npm run typecheck 성공
-- [ ] npm test 통과 (347개)
+- [ ] npm test 통과 (356개)
 - [ ] 기능 동작 확인
 ```
 
