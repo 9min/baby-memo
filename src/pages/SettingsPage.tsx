@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2, GripVertical } from 'lucide-react'
+import { Copy, Check, Plus, Trash2, Pill, UtensilsCrossed, GlassWater, Droplets, Sun, Moon, Monitor, Baby, Download, Loader2, GripVertical, LogOut } from 'lucide-react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
@@ -103,8 +103,8 @@ const SettingsPage = () => {
   const familyCode = useFamilyStore((s) => s.familyCode)
   const familyPassword = useFamilyStore((s) => s.familyPassword)
   const updatePassword = useFamilyStore((s) => s.updatePassword)
-  const getDeviceCount = useFamilyStore((s) => s.getDeviceCount)
   const leave = useFamilyStore((s) => s.leave)
+  const deleteFamily = useFamilyStore((s) => s.deleteFamily)
   const navigate = useNavigate()
 
   const presets = useSupplementStore((s) => s.presets)
@@ -134,7 +134,10 @@ const SettingsPage = () => {
   const [savingPassword, setSavingPassword] = useState(false)
   const [copied, setCopied] = useState(false)
   const [showLeaveDialog, setShowLeaveDialog] = useState(false)
-  const [isLastMember, setIsLastMember] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const [newSupplementName, setNewSupplementName] = useState('')
   const [addingSupplement, setAddingSupplement] = useState(false)
   const [newBabyName, setNewBabyName] = useState('')
@@ -206,9 +209,7 @@ const SettingsPage = () => {
     }
   }
 
-  const handleLeave = async () => {
-    const count = await getDeviceCount()
-    setIsLastMember(count <= 1)
+  const handleLeave = () => {
     setShowLeaveDialog(true)
   }
 
@@ -216,6 +217,25 @@ const SettingsPage = () => {
     setShowLeaveDialog(false)
     await leave()
     navigate('/join', { replace: true })
+  }
+
+  const handleOpenDeleteDialog = () => {
+    setDeletePassword('')
+    setDeleteError('')
+    setShowDeleteDialog(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    setDeleting(true)
+    try {
+      await deleteFamily(deletePassword)
+      setShowDeleteDialog(false)
+      navigate('/join', { replace: true })
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : '삭제에 실패했습니다.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const handleAddBaby = async () => {
@@ -737,13 +757,24 @@ const SettingsPage = () => {
 
       <InstallPrompt />
 
-      <Button
-        variant="outline"
-        className="h-12 cursor-pointer text-base"
-        onClick={handleLeave}
-      >
-        가족방 나가기
-      </Button>
+      <div className="flex flex-col gap-3">
+        <Button
+          variant="outline"
+          className="h-12 cursor-pointer text-base gap-2"
+          onClick={handleLeave}
+        >
+          <LogOut className="h-4 w-4" />
+          가족방 나가기
+        </Button>
+        <Button
+          variant="outline"
+          className="h-12 cursor-pointer text-base gap-2 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={handleOpenDeleteDialog}
+        >
+          <Trash2 className="h-4 w-4" />
+          가족방 삭제하기
+        </Button>
+      </div>
 
       <AlertDialog open={showDeleteBabyDialog !== null} onOpenChange={(open) => { if (!open) setShowDeleteBabyDialog(null) }}>
         <AlertDialogContent>
@@ -768,28 +799,59 @@ const SettingsPage = () => {
       <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {isLastMember ? '모든 데이터가 삭제됩니다' : '가족방을 나가시겠습니까?'}
-            </AlertDialogTitle>
+            <AlertDialogTitle>가족방을 나가시겠습니까?</AlertDialogTitle>
             <AlertDialogDescription>
-              {isLastMember
-                ? '현재 이 가족방에 남은 멤버가 본인뿐입니다. 나가시면 가족방과 모든 기록 데이터가 영구적으로 삭제되며 복구할 수 없습니다.'
-                : '가족방에서 나가면 이 기기에서 더 이상 기록을 볼 수 없습니다. 다른 가족 멤버의 데이터는 유지됩니다.'}
+              이 기기가 가족방에서 제거됩니다. 가족방과 기록 데이터는 유지됩니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="cursor-pointer">취소</AlertDialogCancel>
             <AlertDialogAction
-              className={cn(
-                'cursor-pointer',
-                isLastMember
-                  ? 'bg-destructive text-white hover:bg-destructive/90'
-                  : '',
-              )}
+              className="cursor-pointer"
               onClick={handleConfirmLeave}
             >
               나가기
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { if (!open) setShowDeleteDialog(false) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>가족방을 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription>
+              가족방과 모든 기록 데이터가 영구적으로 삭제되며 복구할 수 없습니다. 계속하려면 방 비밀번호를 입력해주세요.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-2 py-2">
+            <Input
+              type="text"
+              inputMode="numeric"
+              value={deletePassword}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '')
+                if (value.length <= 4) {
+                  setDeletePassword(value)
+                  setDeleteError('')
+                }
+              }}
+              placeholder="비밀번호 4자리"
+              className="h-12 text-center text-lg tracking-[0.5em] font-mono font-semibold"
+            />
+            {deleteError && (
+              <p className="text-sm text-destructive">{deleteError}</p>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="cursor-pointer">취소</AlertDialogCancel>
+            <Button
+              className="cursor-pointer bg-destructive text-white hover:bg-destructive/90"
+              disabled={deletePassword.length !== 4 || deleting}
+              onClick={handleConfirmDelete}
+            >
+              {deleting ? '삭제 중...' : '삭제하기'}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

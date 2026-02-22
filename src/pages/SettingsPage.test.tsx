@@ -29,8 +29,8 @@ describe('SettingsPage', () => {
       familyPassword: '1234',
       deviceId: 'dev-1',
       updatePassword: vi.fn(),
-      getDeviceCount: vi.fn().mockResolvedValue(1),
       leave: vi.fn(),
+      deleteFamily: vi.fn(),
     })
     useSupplementStore.setState({
       presets: [],
@@ -147,7 +147,60 @@ describe('SettingsPage', () => {
     renderSettingsPage()
 
     await user.click(screen.getByText('가족방 나가기'))
-    expect(await screen.findByText(/나가시겠습니까|삭제됩니다/)).toBeInTheDocument()
+    expect(await screen.findByText('가족방을 나가시겠습니까?')).toBeInTheDocument()
+  })
+
+  it('renders delete family button', () => {
+    renderSettingsPage()
+    expect(screen.getByText('가족방 삭제하기')).toBeInTheDocument()
+  })
+
+  it('shows delete dialog with password input', async () => {
+    const user = userEvent.setup()
+    renderSettingsPage()
+
+    await user.click(screen.getByText('가족방 삭제하기'))
+    expect(await screen.findByText('가족방을 삭제하시겠습니까?')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('비밀번호 4자리')).toBeInTheDocument()
+  })
+
+  it('delete button is disabled when password is incomplete', async () => {
+    const user = userEvent.setup()
+    renderSettingsPage()
+
+    await user.click(screen.getByText('가족방 삭제하기'))
+    await screen.findByText('가족방을 삭제하시겠습니까?')
+    expect(screen.getByText('삭제하기')).toBeDisabled()
+  })
+
+  it('calls deleteFamily with correct password', async () => {
+    const deleteFamily = vi.fn().mockResolvedValue(undefined)
+    useFamilyStore.setState({ deleteFamily })
+    const user = userEvent.setup()
+    renderSettingsPage()
+
+    await user.click(screen.getByText('가족방 삭제하기'))
+    await screen.findByText('가족방을 삭제하시겠습니까?')
+
+    await user.type(screen.getByPlaceholderText('비밀번호 4자리'), '1234')
+    await user.click(screen.getByText('삭제하기'))
+
+    expect(deleteFamily).toHaveBeenCalledWith('1234')
+  })
+
+  it('shows error message on wrong password', async () => {
+    const deleteFamily = vi.fn().mockRejectedValue(new Error('비밀번호가 일치하지 않습니다.'))
+    useFamilyStore.setState({ deleteFamily })
+    const user = userEvent.setup()
+    renderSettingsPage()
+
+    await user.click(screen.getByText('가족방 삭제하기'))
+    await screen.findByText('가족방을 삭제하시겠습니까?')
+
+    await user.type(screen.getByPlaceholderText('비밀번호 4자리'), '9999')
+    await user.click(screen.getByText('삭제하기'))
+
+    expect(await screen.findByText('비밀번호가 일치하지 않습니다.')).toBeInTheDocument()
   })
 
   it('shows supplement preset list', () => {
