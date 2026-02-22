@@ -54,9 +54,8 @@ const DrinkIntakeChart = memo(() => {
                 key={type}
                 dataKey={type}
                 name={DRINK_TYPE_LABELS[type]}
-                stackId="a"
                 fill={DRINK_CHART_COLORS[type]}
-                radius={type === 'water' ? [2, 2, 0, 0] : undefined}
+                radius={[2, 2, 0, 0]}
               />
             ))}
           </BarChart>
