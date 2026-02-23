@@ -31,14 +31,7 @@ function getActivityDetail(activity: Activity): string {
     }
     case 'sleep': {
       const meta = activity.metadata as SleepMetadata
-      const parts: string[] = []
-      if (meta.end_time) {
-        parts.push(`~ ${format(new Date(meta.end_time), 'HH:mm', { locale: ko })}`)
-      }
-      if (meta.note) {
-        parts.push(meta.note)
-      }
-      return parts.length > 0 ? parts.join(' · ') : '취침'
+      return meta.note || '취침'
     }
     case 'memo': {
       const meta = activity.metadata as MemoMetadata
@@ -67,6 +60,9 @@ const ActivityCard = memo(({ activity, showDelete = true, onEdit }: ActivityCard
   }, [])
 
   const timeStr = format(new Date(activity.recorded_at), 'HH:mm', { locale: ko })
+  const sleepEndStr = activity.type === 'sleep' && (activity.metadata as SleepMetadata).end_time
+    ? format(new Date((activity.metadata as SleepMetadata).end_time!), 'HH:mm', { locale: ko })
+    : ''
   const detail = getActivityDetail(activity)
 
   const handleDelete = async () => {
@@ -94,13 +90,13 @@ const ActivityCard = memo(({ activity, showDelete = true, onEdit }: ActivityCard
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="shrink-0 font-bold text-sm whitespace-nowrap">{config.label}</span>
-            <span className="text-xs text-muted-foreground bg-secondary rounded-md px-2 py-0.5 break-all">
+            <span className="shrink-0 font-bold text-sm whitespace-nowrap">{timeStr}{sleepEndStr && ` ~ ${sleepEndStr}`}</span>
+            <span className={cn('font-medium text-sm break-all', config.textColor)}>
               {detail}
             </span>
           </div>
           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{timeStr}</span>
+            <span>{config.label}</span>
             {activity.memo && (
               <>
                 <span>·</span>

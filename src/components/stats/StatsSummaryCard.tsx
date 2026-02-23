@@ -42,8 +42,8 @@ const StatsSummaryCard = memo(() => {
       label: '수면',
       value: sleepHours > 0 ? `${sleepHours}h ${sleepMins}m` : `${sleepMins}m`,
       icon: Moon,
-      bgColor: 'bg-indigo-50 dark:bg-indigo-950/40',
-      textColor: 'text-indigo-600 dark:text-indigo-400',
+      bgColor: 'bg-slate-100 dark:bg-slate-900/40',
+      textColor: 'text-slate-600 dark:text-slate-400',
     },
   ]
 

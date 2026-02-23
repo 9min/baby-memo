@@ -1,6 +1,9 @@
-import { UtensilsCrossed, GlassWater, Pill, Droplets, Moon, StickyNote } from 'lucide-react'
+import { UtensilsCrossed, GlassWater, Pill, Moon, StickyNote, createLucideIcon } from 'lucide-react'
+import { diaper } from '@lucide/lab'
 import type { ActivityType, DrinkType, DiaperType, DiaperAmount } from '@/types/database'
 import type { LucideIcon } from 'lucide-react'
+
+const DiaperIcon = createLucideIcon('Diaper', diaper)
 
 export interface ActivityConfig {
   type: ActivityType
@@ -35,7 +38,7 @@ export const ACTIVITY_CONFIGS: Record<ActivityType, ActivityConfig> = {
   diaper: {
     type: 'diaper',
     label: '기저귀',
-    icon: Droplets,
+    icon: DiaperIcon,
     bgColor: 'bg-emerald-50 dark:bg-emerald-950/40',
     textColor: 'text-emerald-600 dark:text-emerald-400',
   },
@@ -43,8 +46,8 @@ export const ACTIVITY_CONFIGS: Record<ActivityType, ActivityConfig> = {
     type: 'sleep',
     label: '잠자요',
     icon: Moon,
-    bgColor: 'bg-indigo-50 dark:bg-indigo-950/40',
-    textColor: 'text-indigo-600 dark:text-indigo-400',
+    bgColor: 'bg-slate-100 dark:bg-slate-900/40',
+    textColor: 'text-slate-600 dark:text-slate-400',
   },
   memo: {
     type: 'memo',
