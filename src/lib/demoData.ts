@@ -48,7 +48,8 @@ function makeActivity(
 function addMinuteVariation(base: Date, hours: number, minutes: number, dayIndex: number, slot: number): Date {
   const d = new Date(base)
   const variation = (deterministicHash(dayIndex, slot) % 31) - 15 // -15 ~ +15 minutes
-  d.setHours(hours, minutes + variation, 0, 0)
+  const rounded = Math.round((minutes + variation) / 5) * 5
+  d.setHours(hours, rounded, 0, 0)
   return d
 }
 
@@ -132,7 +133,7 @@ export function generateDemoActivities(): Activity[] {
     // Nap 1: ~09:30-10:30
     {
       const napStart = addMinuteVariation(dayBase, 9, 30, dayIndex, slot)
-      const durationMin = 45 + (deterministicHash(dayIndex, slot) % 31) // 45-75 min
+      const durationMin = Math.round((45 + (deterministicHash(dayIndex, slot) % 31)) / 5) * 5 // 45-75 min, 5분 단위
       const napEnd = new Date(napStart.getTime() + durationMin * 60000)
       activities.push(makeActivity(
         generateId(dayIndex, slot++),
@@ -145,7 +146,7 @@ export function generateDemoActivities(): Activity[] {
     // Nap 2: ~13:00-14:30
     {
       const napStart = addMinuteVariation(dayBase, 13, 0, dayIndex, slot)
-      const durationMin = 60 + (deterministicHash(dayIndex, slot) % 31) // 60-90 min
+      const durationMin = Math.round((60 + (deterministicHash(dayIndex, slot) % 31)) / 5) * 5 // 60-90 min, 5분 단위
       const napEnd = new Date(napStart.getTime() + durationMin * 60000)
       activities.push(makeActivity(
         generateId(dayIndex, slot++),
@@ -158,7 +159,7 @@ export function generateDemoActivities(): Activity[] {
     // Night sleep: ~20:00 - next day 06:30
     {
       const nightStart = addMinuteVariation(dayBase, 20, 0, dayIndex, slot)
-      const durationMin = 600 + (deterministicHash(dayIndex, slot) % 31) // 600-630 min (10-10.5h)
+      const durationMin = Math.round((600 + (deterministicHash(dayIndex, slot) % 31)) / 5) * 5 // 600-630 min (10-10.5h), 5분 단위
       const nightEnd = new Date(nightStart.getTime() + durationMin * 60000)
       activities.push(makeActivity(
         generateId(dayIndex, slot++),

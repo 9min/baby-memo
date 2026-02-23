@@ -53,8 +53,8 @@ const SleepSheet = ({ open, onOpenChange, onSubmit, initialData }: SleepSheetPro
       <SheetContent side="bottom" className="rounded-t-2xl">
         <SheetHeader>
           <div className="flex items-center gap-2">
-            <div className="rounded-full bg-indigo-100 p-2">
-              <Moon className="h-5 w-5 text-indigo-700" strokeWidth={2} />
+            <div className="rounded-full bg-slate-200 p-2">
+              <Moon className="h-5 w-5 text-slate-700" strokeWidth={2} />
             </div>
             <div>
               <SheetTitle>{initialData ? '잠자요 수정' : '잠자요 기록'}</SheetTitle>
