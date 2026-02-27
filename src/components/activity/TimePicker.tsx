@@ -21,7 +21,7 @@ const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
   const canGoForward = isBefore(startOfDay(value), startOfDay(new Date())) // eslint-disable-line react-hooks/purity
 
   const adjust = (minutes: number) => {
-    const max = Math.ceil(Date.now() / (5 * 60000)) * (5 * 60000)
+    const max = Math.ceil(Date.now() / FIVE_MIN) * FIVE_MIN
     const next = new Date(value.getTime() + minutes * 60000)
     if (next.getTime() <= max) {
       onChange(next)

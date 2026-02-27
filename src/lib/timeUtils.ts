@@ -11,7 +11,7 @@ export const roundToNearest5 = (date: Date): Date => {
   const FIVE_MIN = 5 * 60000
   const maxTime = Math.ceil(Date.now() / FIVE_MIN) * FIVE_MIN
   if (rounded.getTime() > maxTime) {
-    rounded.setMinutes(rounded.getMinutes() - 5)
+    rounded.setTime(maxTime)
   }
   return rounded
 }

@@ -49,13 +49,15 @@ describe('roundToNearest5', () => {
     vi.setSystemTime(new Date('2025-01-15T10:06:00'))
     // 현재 10:06 → 5분 ceiling = 10:10 → 10:08 반올림 = 10:10 ≤ 10:10 → 허용
     const result = roundToNearest5(new Date('2025-01-15T10:08:00'))
+    expect(result.getHours()).toBe(10)
     expect(result.getMinutes()).toBe(10)
   })
 
   it('prevents rounding beyond the 5-minute ceiling', () => {
     vi.setSystemTime(new Date('2025-01-15T10:06:00'))
-    // 현재 10:06 → 5분 ceiling = 10:10 → 10:13 반올림 = 10:15 > 10:10 → 10:10으로 제한
+    // 현재 10:06 → 5분 ceiling = 10:10 → 10:13 반올림 = 10:15 > 10:10 → 10:10으로 clamp
     const result = roundToNearest5(new Date('2025-01-15T10:13:00'))
+    expect(result.getHours()).toBe(10)
     expect(result.getMinutes()).toBe(10)
   })
 })
