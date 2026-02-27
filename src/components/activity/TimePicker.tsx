@@ -15,13 +15,15 @@ const HOURS_12 = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 const TimePicker = ({ value, onChange, label = '시간' }: TimePickerProps) => {
   const [editing, setEditing] = useState(false)
 
-  const wouldBeFuture = value.getTime() + 5 * 60000 > Date.now() // eslint-disable-line react-hooks/purity
+  const FIVE_MIN = 5 * 60000 // eslint-disable-line react-hooks/purity
+  const maxTime = Math.ceil(Date.now() / FIVE_MIN) * FIVE_MIN // eslint-disable-line react-hooks/purity
+  const wouldBeFuture = value.getTime() + FIVE_MIN > maxTime
   const canGoForward = isBefore(startOfDay(value), startOfDay(new Date())) // eslint-disable-line react-hooks/purity
 
   const adjust = (minutes: number) => {
-    const now = Date.now()
+    const max = Math.ceil(Date.now() / (5 * 60000)) * (5 * 60000)
     const next = new Date(value.getTime() + minutes * 60000)
-    if (next.getTime() <= now) {
+    if (next.getTime() <= max) {
       onChange(next)
     }
   }
