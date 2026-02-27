@@ -7,8 +7,11 @@ export const roundToNearest5 = (date: Date): Date => {
   } else {
     rounded.setMinutes(minutes + (5 - remainder), 0, 0)
   }
-  if (rounded > new Date()) {
-    rounded.setMinutes(rounded.getMinutes() - 5)
+  // 5분 단위 ceiling까지 허용 (예: 10:43이면 10:45까지 허용)
+  const FIVE_MIN = 5 * 60000
+  const maxTime = Math.ceil(Date.now() / FIVE_MIN) * FIVE_MIN
+  if (rounded.getTime() > maxTime) {
+    rounded.setTime(maxTime)
   }
   return rounded
 }

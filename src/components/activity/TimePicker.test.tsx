@@ -45,10 +45,20 @@ describe('roundToNearest5', () => {
     expect(result.getMilliseconds()).toBe(0)
   })
 
-  it('prevents rounding to future time', () => {
+  it('allows rounding up to the 5-minute ceiling', () => {
     vi.setSystemTime(new Date('2025-01-15T10:06:00'))
+    // 현재 10:06 → 5분 ceiling = 10:10 → 10:08 반올림 = 10:10 ≤ 10:10 → 허용
     const result = roundToNearest5(new Date('2025-01-15T10:08:00'))
-    expect(result.getMinutes()).toBe(5)
+    expect(result.getHours()).toBe(10)
+    expect(result.getMinutes()).toBe(10)
+  })
+
+  it('prevents rounding beyond the 5-minute ceiling', () => {
+    vi.setSystemTime(new Date('2025-01-15T10:06:00'))
+    // 현재 10:06 → 5분 ceiling = 10:10 → 10:13 반올림 = 10:15 > 10:10 → 10:10으로 clamp
+    const result = roundToNearest5(new Date('2025-01-15T10:13:00'))
+    expect(result.getHours()).toBe(10)
+    expect(result.getMinutes()).toBe(10)
   })
 })
 
@@ -108,11 +118,21 @@ describe('TimePicker', () => {
     expect(arg.getMinutes()).toBe(25)
   })
 
-  it('disables +5 when it would result in future time', () => {
+  it('enables +5 when result is within the next 5-minute ceiling', () => {
     vi.setSystemTime(new Date('2025-01-15T10:32:00'))
     render(
       <TimePicker value={new Date('2025-01-15T10:30:00')} onChange={() => {}} />,
     )
+    // 현재 10:32 → 5분 ceiling = 10:35 → value+5 = 10:35 ≤ 10:35 → enabled
+    expect(screen.getByText('+5')).not.toBeDisabled()
+  })
+
+  it('disables +5 when it would exceed the 5-minute ceiling', () => {
+    vi.setSystemTime(new Date('2025-01-15T10:32:00'))
+    render(
+      <TimePicker value={new Date('2025-01-15T10:35:00')} onChange={() => {}} />,
+    )
+    // 현재 10:32 → 5분 ceiling = 10:35 → value+5 = 10:40 > 10:35 → disabled
     expect(screen.getByText('+5')).toBeDisabled()
   })
 
