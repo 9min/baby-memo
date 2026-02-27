@@ -82,10 +82,10 @@ npm run test:coverage # 커버리지 리포트
 ```
 
 ### 테스트 현황
-- **총 38개 테스트 파일**, 356개 테스트
-- 페이지 테스트 5개, 스토어 테스트 5개, 훅 테스트 2개
+- **총 40개 테스트 파일**, 380개 테스트
+- 페이지 테스트 5개, 스토어 테스트 6개 (demoStore 포함), 훅 테스트 2개
 - 컴포넌트 테스트: activity 10개, layout 2개 + family 1개, stats 6개
-- 유틸리티 테스트: lib 7개, App 1개
+- 유틸리티 테스트: lib 8개 (demoData 포함), App 1개
 
 ### 파일 규칙
 - 테스트 파일은 소스 파일 옆에 co-locate: `Component.test.tsx`, `utils.test.ts`

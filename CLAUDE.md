@@ -44,10 +44,10 @@ src/
   hooks/             # useFamily, useActivitySubscription, useTheme
   lib/               # supabase, constants, deviceUtils, utils, activityConfig,
                      #   timeGrouping, timeUtils, statsUtils, babyUtils,
-                     #   dataExport
+                     #   dataExport, demoData
   pages/             # JoinPage, HomePage, TimelinePage, StatsPage, SettingsPage
   stores/            # familyStore, activityStore, babyStore, supplementStore,
-                     #   statsStore, defaultsStore, themeStore
+                     #   statsStore, defaultsStore, themeStore, demoStore
   test/              # 테스트 셋업 및 헬퍼
   types/             # database.ts (Family, Device, Activity, Baby, SupplementPreset)
                      # stats.ts (StatsPeriod, DateRange, DailyActivityCount 등)
@@ -89,7 +89,7 @@ docs/                # PRD, 아키텍처, 개발 플로우, Git 워크플로우
 - Nunito Sans 구글 폰트.
 
 ### 상태관리
-- Zustand store는 `src/stores/`에 위치 (7개 스토어).
+- Zustand store는 `src/stores/`에 위치 (8개 스토어).
 - 컴포넌트에서는 개별 selector로 구독 (리렌더링 최소화).
   ```ts
   // Good
@@ -131,7 +131,7 @@ npx shadcn@latest add [component-name]
 - **환경**: jsdom
 
 ### 현황
-- 38개 테스트 파일, 356개 테스트
+- 40개 테스트 파일, 380개 테스트
 
 ### 명령어
 ```bash

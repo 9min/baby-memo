@@ -14,10 +14,10 @@
 │       │      │TimelinePage │     │              │          │
 │       │      └──────┬──────┘     │              │          │
 │  ┌────▼─────────────▼────────────▼──────────────▼──────┐  │
-│  │              Zustand Stores (7개)                     │  │
+│  │              Zustand Stores (8개)                     │  │
 │  │  familyStore · activityStore · babyStore             │  │
 │  │  supplementStore · statsStore · defaultsStore        │  │
-│  │  themeStore                                          │  │
+│  │  themeStore · demoStore                              │  │
 │  └──────────────────────┬──────────────────────────────┘  │
 │                          │                                  │
 │  ┌──────────────────────▼──────────────────────────────┐  │
@@ -161,7 +161,7 @@ FamilyGuard 렌더링
   └── familyId 존재 → <Outlet /> (자식 라우트 렌더링)
 ```
 
-### 상태 관리 (Zustand — 7개 스토어)
+### 상태 관리 (Zustand — 8개 스토어)
 
 ```
 familyStore
@@ -193,6 +193,10 @@ defaultsStore (localStorage 영속)
 themeStore (localStorage 영속)
 ├── State: theme ('light' | 'dark' | 'system')
 ├── Actions: setTheme
+
+demoStore
+├── State: isDemo
+├── Actions: enterDemo, exitDemo
 ```
 
 ### 컴포넌트 계층
@@ -245,10 +249,10 @@ src/
 ├── hooks/             # useFamily, useActivitySubscription, useTheme
 ├── lib/               # supabase, constants, deviceUtils, utils, activityConfig,
 │                      #   timeGrouping, timeUtils, statsUtils, babyUtils,
-│                      #   dataExport
+│                      #   dataExport, demoData
 ├── pages/             # JoinPage, HomePage, TimelinePage, StatsPage, SettingsPage
 ├── stores/            # familyStore, activityStore, babyStore, supplementStore,
-│                      #   statsStore, defaultsStore, themeStore
+│                      #   statsStore, defaultsStore, themeStore, demoStore
 ├── test/              # setup.ts, helpers/ (mockActivity, mockSupabase,
 │                      #   renderWithRouter, zustandTestUtils)
 ├── types/             # database.ts, stats.ts
