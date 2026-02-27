@@ -76,7 +76,13 @@
 - 요약 카드 (아이콘 배지 + 총 활동, 총 수분량, 총 수면시간)
 - 기간별 날짜 네비게이터
 
-#### F6: PWA 지원
+#### F6: 체험 모드 (Demo Mode)
+- 가족 코드 없이 앱 기능을 미리 체험
+- 더미 데이터로 홈/타임라인/통계 화면 체험 가능
+- JoinPage에서 "체험해보기" 버튼으로 진입
+- 체험 모드 종료 시 일반 가족방 참여 플로우로 이동
+
+#### F7: PWA 지원
 - 홈 화면에 앱 추가 (Add to Home Screen)
 - 앱 아이콘 및 스플래시 화면
 - 설치 프롬프트 (InstallPrompt 컴포넌트)
@@ -131,7 +137,7 @@
 | 보안 | 가족방 비밀번호(4자리), MVP에서는 RLS 미적용 |
 | 가용성 | Supabase 무료 티어 범위 내 운영 |
 | 언어 | 한국어 UI |
-| 테스트 | 356개 테스트 (Vitest + Testing Library) |
+| 테스트 | 380개 테스트 (Vitest + Testing Library) |
 | CI | GitHub Actions PR 체크 (typecheck + lint + test + build) |
 
 ## 6. 성공 지표
@@ -141,7 +147,7 @@
 - 새로고침 후 자동 복원 성공
 - 2대 이상 기기에서 같은 family_id 공유 확인
 - `npm run build` 에러 없이 성공
-- 356개 테스트 통과
+- 380개 테스트 통과
 
 ### 향후 지표
 - DAU (Daily Active Users)
