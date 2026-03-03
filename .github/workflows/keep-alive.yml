@@ -1,0 +1,38 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # 5일마다 실행 (UTC 00:00)
+    - cron: '0 0 */5 * *'
+  workflow_dispatch: # 수동 실행 지원
+
+jobs:
+  ping:
+    name: Ping Supabase
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping database
+        uses: actions/github-script@v7
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        with:
+          script: |
+            const { createClient } = require('@supabase/supabase-js');
+
+            const supabase = createClient(
+              process.env.SUPABASE_URL,
+              process.env.SUPABASE_ANON_KEY
+            );
+
+            const { data, error } = await supabase
+              .from('families')
+              .select('id')
+              .limit(1);
+
+            if (error) {
+              core.setFailed(`Supabase ping failed: ${error.message}`);
+            } else {
+              core.info(`Supabase ping successful. Rows returned: ${data.length}`);
+            }
