@@ -5,6 +5,7 @@ import { Trash2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ACTIVITY_CONFIGS, DRINK_TYPE_LABELS, DIAPER_TYPE_LABELS, DIAPER_AMOUNT_LABELS } from '@/lib/activityConfig'
+import { isNextDay } from '@/lib/timeUtils'
 import { useActivityStore } from '@/stores/activityStore'
 import { cn } from '@/lib/utils'
 import type { Activity, SolidFoodMetadata, DrinkMetadata, DiaperMetadata, SupplementMetadata, SleepMetadata, MemoMetadata } from '@/types/database'
@@ -60,9 +61,13 @@ const ActivityCard = memo(({ activity, showDelete = true, onEdit }: ActivityCard
   }, [])
 
   const timeStr = format(new Date(activity.recorded_at), 'HH:mm', { locale: ko })
-  const sleepEndStr = activity.type === 'sleep' && (activity.metadata as SleepMetadata).end_time
-    ? format(new Date((activity.metadata as SleepMetadata).end_time!), 'HH:mm', { locale: ko })
+  const sleepMeta = activity.type === 'sleep' ? (activity.metadata as SleepMetadata) : null
+  const sleepEndStr = sleepMeta?.end_time
+    ? format(new Date(sleepMeta.end_time), 'HH:mm', { locale: ko })
     : ''
+  const isOvernightSleep = sleepMeta?.end_time
+    ? isNextDay(activity.recorded_at, sleepMeta.end_time)
+    : false
   const detail = getActivityDetail(activity)
 
   const handleDelete = async () => {
@@ -90,7 +95,7 @@ const ActivityCard = memo(({ activity, showDelete = true, onEdit }: ActivityCard
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="shrink-0 font-bold text-sm whitespace-nowrap">{timeStr}{sleepEndStr && ` ~ ${sleepEndStr}`}</span>
+            <span className="shrink-0 font-bold text-sm whitespace-nowrap">{timeStr}{sleepEndStr && ` ~ ${isOvernightSleep ? '다음날 ' : ''}${sleepEndStr}`}</span>
             <span className={cn('font-medium text-sm break-all', config.textColor)}>
               {detail}
             </span>

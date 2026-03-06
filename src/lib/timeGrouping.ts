@@ -1,8 +1,26 @@
-import type { Activity } from '@/types/database'
+import type { Activity, SleepMetadata } from '@/types/database'
 
 export interface TimeGroup {
   label: string
   activities: Activity[]
+}
+
+function isSameDate(a: string, b: string): boolean {
+  const da = new Date(a)
+  const db = new Date(b)
+  return da.getFullYear() === db.getFullYear()
+    && da.getMonth() === db.getMonth()
+    && da.getDate() === db.getDate()
+}
+
+function getGroupingHour(activity: Activity): number {
+  if (activity.type === 'sleep') {
+    const endTime = (activity.metadata as SleepMetadata).end_time
+    if (endTime && isSameDate(activity.recorded_at, endTime)) {
+      return new Date(endTime).getHours()
+    }
+  }
+  return new Date(activity.recorded_at).getHours()
 }
 
 export function groupByTimeOfDay(activities: Activity[]): TimeGroup[] {
@@ -11,7 +29,7 @@ export function groupByTimeOfDay(activities: Activity[]): TimeGroup[] {
   const evening: Activity[] = []
 
   for (const activity of activities) {
-    const hour = new Date(activity.recorded_at).getHours()
+    const hour = getGroupingHour(activity)
     if (hour >= 6 && hour < 12) {
       morning.push(activity)
     } else if (hour >= 12 && hour < 18) {

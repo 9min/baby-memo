@@ -1,3 +1,9 @@
+import { startOfDay } from 'date-fns'
+
+export const isNextDay = (startIso: string, endIso: string): boolean => {
+  return startOfDay(new Date(endIso)).getTime() > startOfDay(new Date(startIso)).getTime()
+}
+
 export const roundToNearest5 = (date: Date): Date => {
   const rounded = new Date(date)
   const minutes = rounded.getMinutes()

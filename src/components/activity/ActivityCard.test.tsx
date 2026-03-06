@@ -140,6 +140,27 @@ describe('ActivityCard', () => {
     expect(onEdit).not.toHaveBeenCalled()
   })
 
+  it('야간 수면(자정 넘김)에 "다음날" 표시', () => {
+    const activity = createMockActivity({
+      type: 'sleep',
+      recorded_at: '2025-01-15T23:20:00',
+      metadata: { note: '', end_time: '2025-01-16T09:00:00' } satisfies SleepMetadata,
+    })
+    render(<ActivityCard activity={activity} />)
+    expect(screen.getByText('23:20 ~ 다음날 09:00')).toBeInTheDocument()
+  })
+
+  it('당일 수면에는 "다음날" 미표시', () => {
+    const activity = createMockActivity({
+      type: 'sleep',
+      recorded_at: '2025-01-15T13:00:00',
+      metadata: { note: '', end_time: '2025-01-15T14:30:00' } satisfies SleepMetadata,
+    })
+    render(<ActivityCard activity={activity} />)
+    expect(screen.getByText('13:00 ~ 14:30')).toBeInTheDocument()
+    expect(screen.queryByText(/다음날/)).not.toBeInTheDocument()
+  })
+
   it('does not display separator when no memo', () => {
     const activity = createMockActivity({ recorded_at: '2025-01-15T10:30:00', memo: null })
     render(<ActivityCard activity={activity} />)
