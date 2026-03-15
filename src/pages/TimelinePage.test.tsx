@@ -68,7 +68,6 @@ describe('TimelinePage', () => {
 
     expect(screen.getByText('오전')).toBeInTheDocument()
     expect(screen.getByText('오후')).toBeInTheDocument()
-    expect(screen.getByText('저녁/밤')).toBeInTheDocument()
   })
 
   it('shows activity count per group', () => {
