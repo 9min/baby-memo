@@ -42,7 +42,7 @@ describe('groupByTimeOfDay', () => {
     ]
     const groups = groupByTimeOfDay(activities)
     expect(groups).toHaveLength(1)
-    expect(groups[0].label).toBe('저녁/밤')
+    expect(groups[0].label).toBe('오후')
     expect(groups[0].activities).toHaveLength(3)
   })
 
@@ -53,10 +53,9 @@ describe('groupByTimeOfDay', () => {
       createMockActivity({ recorded_at: '2025-01-15T22:00:00' }),
     ]
     const groups = groupByTimeOfDay(activities)
-    expect(groups).toHaveLength(3)
+    expect(groups).toHaveLength(2)
     expect(groups[0].label).toBe('오전')
     expect(groups[1].label).toBe('오후')
-    expect(groups[2].label).toBe('저녁/밤')
   })
 
   it('only includes groups with activities', () => {
@@ -67,7 +66,7 @@ describe('groupByTimeOfDay', () => {
     const groups = groupByTimeOfDay(activities)
     expect(groups).toHaveLength(2)
     expect(groups[0].label).toBe('오전')
-    expect(groups[1].label).toBe('저녁/밤')
+    expect(groups[1].label).toBe('오후')
   })
 
   it('handles midnight correctly as evening/night', () => {
@@ -76,7 +75,7 @@ describe('groupByTimeOfDay', () => {
     ]
     const groups = groupByTimeOfDay(activities)
     expect(groups).toHaveLength(1)
-    expect(groups[0].label).toBe('저녁/밤')
+    expect(groups[0].label).toBe('오후')
   })
 
   it('hour 5 is evening/night, hour 6 is morning', () => {
@@ -88,7 +87,7 @@ describe('groupByTimeOfDay', () => {
     expect(groups).toHaveLength(2)
     expect(groups[0].label).toBe('오전')
     expect(groups[0].activities).toHaveLength(1)
-    expect(groups[1].label).toBe('저녁/밤')
+    expect(groups[1].label).toBe('오후')
     expect(groups[1].activities).toHaveLength(1)
   })
 
@@ -115,7 +114,7 @@ describe('groupByTimeOfDay', () => {
     ]
     const groups = groupByTimeOfDay(activities)
     expect(groups).toHaveLength(1)
-    expect(groups[0].label).toBe('저녁/밤')
+    expect(groups[0].label).toBe('오후')
   })
 
   it('수면 end_time 오후 → 오후 그룹', () => {
@@ -131,7 +130,7 @@ describe('groupByTimeOfDay', () => {
     expect(groups[0].label).toBe('오후')
   })
 
-  it('야간 수면(자정 넘김)은 recorded_at 기준 → 저녁/밤', () => {
+  it('야간 수면(자정 넘김)은 recorded_at 기준 → 오후', () => {
     const activities = [
       createMockActivity({
         type: 'sleep',
@@ -141,6 +140,6 @@ describe('groupByTimeOfDay', () => {
     ]
     const groups = groupByTimeOfDay(activities)
     expect(groups).toHaveLength(1)
-    expect(groups[0].label).toBe('저녁/밤')
+    expect(groups[0].label).toBe('오후')
   })
 })
