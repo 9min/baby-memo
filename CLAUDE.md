@@ -108,12 +108,19 @@ docs/                # PRD, 아키텍처, 개발 플로우, Git 워크플로우
 - 가족 코드(6-8자리, 영대문자+숫자)로 입장.
 - 기존 가족방 참여 시 4자리 비밀번호 필요.
 - 기기 식별: `crypto.randomUUID()` → localStorage 저장.
-- RLS 미사용. 앱 레벨에서 `family_id` 필터링.
+- 비밀번호: DB에 **bcrypt 해시**로 저장. 평문은 localStorage(`FAMILY_PASSWORD_KEY`)에만 보관.
+- RLS 활성화 (migration 00012). `families` 테이블은 security definer 함수로만 접근:
+  - `get_family_by_code(code)` — 존재 확인
+  - `verify_family(code, password)` — 비밀번호 검증 후 입장
+  - `create_family(code, password)` — 신규 생성
+  - `update_family_password(family_id, new_password)` — 비밀번호 변경
+  - `delete_family_secure(family_id, password)` — 비밀번호 확인 후 삭제
+- `activities`, `babies`, `devices`, `supplement_presets`: anon 전체 허용 (앱 레벨에서 `family_id` 필터링).
 
 ## Supabase
 - 클라이언트: `src/lib/supabase.ts`
 - 환경변수: `.env.local`에 `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-- 마이그레이션: `supabase/migrations/` 디렉토리에 순번 prefix (00001~00011)
+- 마이그레이션: `supabase/migrations/` 디렉토리에 순번 prefix (00001~00012)
 - Realtime 활성 테이블: `activities`, `babies`, `supplement_presets`
 
 ## shadcn/ui 컴포넌트 추가

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useFamilyStore } from './familyStore'
 import { supabase } from '@/lib/supabase'
-import { FAMILY_CODE_KEY } from '@/lib/constants'
+import { FAMILY_CODE_KEY, FAMILY_PASSWORD_KEY } from '@/lib/constants'
 import { resetAllStores } from '@/test/helpers/zustandTestUtils'
 
-// Cast supabase.from to mock for test manipulation
 const mockFrom = supabase.from as ReturnType<typeof vi.fn>
+const mockRpc = supabase.rpc as ReturnType<typeof vi.fn>
 
 function mockQueryBuilder(overrides: Record<string, unknown> = {}) {
   const builder = {
@@ -54,97 +54,71 @@ describe('familyStore', () => {
 
     it('restores family from localStorage when valid', async () => {
       localStorage.setItem(FAMILY_CODE_KEY, 'TESTCODE')
+      localStorage.setItem(FAMILY_PASSWORD_KEY, '1234')
 
-      let callCount = 0
-      mockFrom.mockImplementation(() => {
-        callCount++
-        if (callCount === 1) {
-          // Family lookup
-          return mockQueryBuilder({
-            single: vi.fn().mockResolvedValue({
-              data: { id: 'fam-id', code: 'TESTCODE', password: '1234' },
-              error: null,
-            }),
-          })
-        } else {
-          // Device lookup
-          return mockQueryBuilder({
-            single: vi.fn().mockResolvedValue({
-              data: { id: 'dev-id' },
-              error: null,
-            }),
-          })
+      let rpcCallCount = 0
+      mockRpc.mockImplementation(() => {
+        rpcCallCount++
+        if (rpcCallCount === 1) {
+          return Promise.resolve({ data: [{ id: 'fam-id', code: 'TESTCODE' }], error: null })
         }
+        return Promise.resolve({ data: null, error: null })
       })
+
+      mockFrom.mockReturnValue(
+        mockQueryBuilder({
+          single: vi.fn().mockResolvedValue({ data: { id: 'dev-id' }, error: null }),
+        }),
+      )
 
       await useFamilyStore.getState().initialize()
       expect(useFamilyStore.getState().familyId).toBe('fam-id')
       expect(useFamilyStore.getState().familyCode).toBe('TESTCODE')
+      expect(useFamilyStore.getState().familyPassword).toBe('1234')
       expect(useFamilyStore.getState().initialized).toBe(true)
     })
 
     it('clears localStorage when family not found', async () => {
       localStorage.setItem(FAMILY_CODE_KEY, 'INVALID')
+      localStorage.setItem(FAMILY_PASSWORD_KEY, '1234')
 
-      mockFrom.mockReturnValue(
-        mockQueryBuilder({
-          single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        }),
-      )
+      mockRpc.mockResolvedValue({ data: [], error: null })
 
       await useFamilyStore.getState().initialize()
       expect(localStorage.getItem(FAMILY_CODE_KEY)).toBeNull()
+      expect(localStorage.getItem(FAMILY_PASSWORD_KEY)).toBeNull()
       expect(useFamilyStore.getState().familyId).toBeNull()
       expect(useFamilyStore.getState().initialized).toBe(true)
     })
 
     it('clears localStorage when device not registered', async () => {
       localStorage.setItem(FAMILY_CODE_KEY, 'TESTCODE')
+      localStorage.setItem(FAMILY_PASSWORD_KEY, '1234')
 
-      let callCount = 0
-      mockFrom.mockImplementation(() => {
-        callCount++
-        if (callCount === 1) {
-          return mockQueryBuilder({
-            single: vi.fn().mockResolvedValue({
-              data: { id: 'fam-id', code: 'TESTCODE', password: '1234' },
-              error: null,
-            }),
-          })
-        } else {
-          return mockQueryBuilder({
-            single: vi.fn().mockResolvedValue({ data: null, error: null }),
-          })
-        }
-      })
+      mockRpc.mockResolvedValue({ data: [{ id: 'fam-id', code: 'TESTCODE' }], error: null })
+      mockFrom.mockReturnValue(
+        mockQueryBuilder({
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      )
 
       await useFamilyStore.getState().initialize()
       expect(localStorage.getItem(FAMILY_CODE_KEY)).toBeNull()
+      expect(localStorage.getItem(FAMILY_PASSWORD_KEY)).toBeNull()
       expect(useFamilyStore.getState().familyId).toBeNull()
     })
   })
 
   describe('checkFamilyExists', () => {
     it('returns true when family exists', async () => {
-      mockFrom.mockReturnValue(
-        mockQueryBuilder({
-          single: vi.fn().mockResolvedValue({
-            data: { id: 'fam-id' },
-            error: null,
-          }),
-        }),
-      )
+      mockRpc.mockResolvedValue({ data: [{ id: 'fam-id', code: 'TESTCODE' }], error: null })
 
       const exists = await useFamilyStore.getState().checkFamilyExists('TESTCODE')
       expect(exists).toBe(true)
     })
 
     it('returns false when family does not exist', async () => {
-      mockFrom.mockReturnValue(
-        mockQueryBuilder({
-          single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        }),
-      )
+      mockRpc.mockResolvedValue({ data: [], error: null })
 
       const exists = await useFamilyStore.getState().checkFamilyExists('UNKNOWN')
       expect(exists).toBe(false)
@@ -153,63 +127,56 @@ describe('familyStore', () => {
 
   describe('joinOrCreate', () => {
     it('creates new family when code does not exist', async () => {
-      let callCount = 0
-      mockFrom.mockImplementation(() => {
-        callCount++
-        if (callCount === 1) {
-          // Check existing family
-          return mockQueryBuilder({
-            single: vi.fn().mockResolvedValue({ data: null, error: null }),
-          })
-        } else if (callCount === 2) {
-          // Create new family
-          return mockQueryBuilder({
-            single: vi.fn().mockResolvedValue({
-              data: { id: 'new-fam', code: 'NEWCODE', password: '5678' },
-              error: null,
-            }),
-          })
-        } else {
-          // Upsert device
-          return mockQueryBuilder()
+      let rpcCallCount = 0
+      mockRpc.mockImplementation(() => {
+        rpcCallCount++
+        if (rpcCallCount === 1) {
+          // get_family_by_code — not found
+          return Promise.resolve({ data: [], error: null })
         }
+        // create_family
+        return Promise.resolve({ data: [{ id: 'new-fam', code: 'NEWCODE' }], error: null })
       })
+
+      mockFrom.mockReturnValue(mockQueryBuilder()) // device upsert
 
       await useFamilyStore.getState().joinOrCreate('newcode')
       expect(useFamilyStore.getState().familyId).toBe('new-fam')
       expect(useFamilyStore.getState().familyCode).toBe('NEWCODE')
       expect(localStorage.getItem(FAMILY_CODE_KEY)).toBe('NEWCODE')
+      expect(localStorage.getItem(FAMILY_PASSWORD_KEY)).toBeTruthy()
     })
 
     it('joins existing family with correct password', async () => {
-      let callCount = 0
-      mockFrom.mockImplementation(() => {
-        callCount++
-        if (callCount === 1) {
-          return mockQueryBuilder({
-            single: vi.fn().mockResolvedValue({
-              data: { id: 'exist-fam', code: 'EXIST', password: '1234' },
-              error: null,
-            }),
-          })
-        } else {
-          return mockQueryBuilder()
+      let rpcCallCount = 0
+      mockRpc.mockImplementation(() => {
+        rpcCallCount++
+        if (rpcCallCount === 1) {
+          // get_family_by_code — found
+          return Promise.resolve({ data: [{ id: 'exist-fam', code: 'EXIST' }], error: null })
         }
+        // verify_family — password correct
+        return Promise.resolve({ data: [{ id: 'exist-fam', code: 'EXIST' }], error: null })
       })
+
+      mockFrom.mockReturnValue(mockQueryBuilder()) // device upsert
 
       await useFamilyStore.getState().joinOrCreate('EXIST', '1234')
       expect(useFamilyStore.getState().familyId).toBe('exist-fam')
+      expect(localStorage.getItem(FAMILY_PASSWORD_KEY)).toBe('1234')
     })
 
     it('throws on wrong password', async () => {
-      mockFrom.mockReturnValue(
-        mockQueryBuilder({
-          single: vi.fn().mockResolvedValue({
-            data: { id: 'exist-fam', code: 'EXIST', password: '1234' },
-            error: null,
-          }),
-        }),
-      )
+      let rpcCallCount = 0
+      mockRpc.mockImplementation(() => {
+        rpcCallCount++
+        if (rpcCallCount === 1) {
+          // get_family_by_code — found
+          return Promise.resolve({ data: [{ id: 'exist-fam', code: 'EXIST' }], error: null })
+        }
+        // verify_family — password wrong → empty result
+        return Promise.resolve({ data: [], error: null })
+      })
 
       await expect(
         useFamilyStore.getState().joinOrCreate('EXIST', '9999'),
@@ -217,21 +184,15 @@ describe('familyStore', () => {
     })
 
     it('throws when family creation fails', async () => {
-      let callCount = 0
-      mockFrom.mockImplementation(() => {
-        callCount++
-        if (callCount === 1) {
-          return mockQueryBuilder({
-            single: vi.fn().mockResolvedValue({ data: null, error: null }),
-          })
-        } else {
-          return mockQueryBuilder({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'fail' },
-            }),
-          })
+      let rpcCallCount = 0
+      mockRpc.mockImplementation(() => {
+        rpcCallCount++
+        if (rpcCallCount === 1) {
+          // get_family_by_code — not found
+          return Promise.resolve({ data: [], error: null })
         }
+        // create_family — error
+        return Promise.resolve({ data: null, error: { message: 'fail' } })
       })
 
       await expect(
@@ -240,24 +201,16 @@ describe('familyStore', () => {
     })
 
     it('converts code to uppercase', async () => {
-      let callCount = 0
-      mockFrom.mockImplementation(() => {
-        callCount++
-        if (callCount === 1) {
-          return mockQueryBuilder({
-            single: vi.fn().mockResolvedValue({ data: null, error: null }),
-          })
-        } else if (callCount === 2) {
-          return mockQueryBuilder({
-            single: vi.fn().mockResolvedValue({
-              data: { id: 'new-fam', code: 'LOWER', password: '1234' },
-              error: null,
-            }),
-          })
-        } else {
-          return mockQueryBuilder()
+      let rpcCallCount = 0
+      mockRpc.mockImplementation(() => {
+        rpcCallCount++
+        if (rpcCallCount === 1) {
+          return Promise.resolve({ data: [], error: null })
         }
+        return Promise.resolve({ data: [{ id: 'new-fam', code: 'LOWER' }], error: null })
       })
+
+      mockFrom.mockReturnValue(mockQueryBuilder())
 
       await useFamilyStore.getState().joinOrCreate('lower')
       expect(useFamilyStore.getState().familyCode).toBe('LOWER')
@@ -265,12 +218,14 @@ describe('familyStore', () => {
   })
 
   describe('updatePassword', () => {
-    it('updates password in store', async () => {
+    it('updates password in store and localStorage', async () => {
       useFamilyStore.setState({ familyId: 'fam-1', familyPassword: '1234' })
-      mockFrom.mockReturnValue(mockQueryBuilder())
+      localStorage.setItem(FAMILY_PASSWORD_KEY, '1234')
+      mockRpc.mockResolvedValue({ data: null, error: null })
 
       await useFamilyStore.getState().updatePassword('5678')
       expect(useFamilyStore.getState().familyPassword).toBe('5678')
+      expect(localStorage.getItem(FAMILY_PASSWORD_KEY)).toBe('5678')
     })
 
     it('does nothing when no familyId', async () => {
@@ -281,11 +236,7 @@ describe('familyStore', () => {
 
     it('throws on error', async () => {
       useFamilyStore.setState({ familyId: 'fam-1' })
-      mockFrom.mockReturnValue(
-        mockQueryBuilder({
-          eq: vi.fn().mockResolvedValue({ data: null, error: { message: 'fail' } }),
-        }),
-      )
+      mockRpc.mockResolvedValue({ data: null, error: { message: 'fail' } })
 
       await expect(
         useFamilyStore.getState().updatePassword('5678'),
@@ -301,6 +252,7 @@ describe('familyStore', () => {
         familyPassword: '1234',
       })
       localStorage.setItem(FAMILY_CODE_KEY, 'TESTCODE')
+      localStorage.setItem(FAMILY_PASSWORD_KEY, '1234')
 
       mockFrom.mockReturnValue(mockQueryBuilder())
 
@@ -309,6 +261,7 @@ describe('familyStore', () => {
       expect(useFamilyStore.getState().familyCode).toBeNull()
       expect(useFamilyStore.getState().familyPassword).toBeNull()
       expect(localStorage.getItem(FAMILY_CODE_KEY)).toBeNull()
+      expect(localStorage.getItem(FAMILY_PASSWORD_KEY)).toBeNull()
     })
   })
 
@@ -319,6 +272,8 @@ describe('familyStore', () => {
         familyCode: 'TESTCODE',
         familyPassword: '1234',
       })
+
+      mockRpc.mockResolvedValue({ data: false, error: null })
 
       await expect(
         useFamilyStore.getState().deleteFamily('9999'),
@@ -335,14 +290,25 @@ describe('familyStore', () => {
         familyPassword: '1234',
       })
       localStorage.setItem(FAMILY_CODE_KEY, 'TESTCODE')
+      localStorage.setItem(FAMILY_PASSWORD_KEY, '1234')
 
-      mockFrom.mockReturnValue(mockQueryBuilder())
+      mockRpc.mockResolvedValue({ data: true, error: null })
 
       await useFamilyStore.getState().deleteFamily('1234')
       expect(useFamilyStore.getState().familyId).toBeNull()
       expect(useFamilyStore.getState().familyCode).toBeNull()
       expect(useFamilyStore.getState().familyPassword).toBeNull()
       expect(localStorage.getItem(FAMILY_CODE_KEY)).toBeNull()
+      expect(localStorage.getItem(FAMILY_PASSWORD_KEY)).toBeNull()
+    })
+
+    it('throws on RPC error', async () => {
+      useFamilyStore.setState({ familyId: 'fam-1', familyCode: 'TESTCODE' })
+      mockRpc.mockResolvedValue({ data: null, error: { message: 'db error' } })
+
+      await expect(
+        useFamilyStore.getState().deleteFamily('1234'),
+      ).rejects.toThrow('가족방 삭제에 실패했습니다.')
     })
   })
 })

@@ -1,12 +1,17 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { getDeviceId } from '@/lib/deviceUtils'
-import { FAMILY_CODE_KEY } from '@/lib/constants'
+import { FAMILY_CODE_KEY, FAMILY_PASSWORD_KEY } from '@/lib/constants'
 import { useDefaultsStore } from '@/stores/defaultsStore'
 import { useDemoStore } from '@/stores/demoStore'
 
 function generatePassword(): string {
   return String(Math.floor(Math.random() * 10000)).padStart(4, '0')
+}
+
+interface FamilyRow {
+  id: string
+  code: string
 }
 
 interface FamilyState {
@@ -50,19 +55,18 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     }
 
     try {
-      const { data: family } = await supabase
-        .from('families')
-        .select('id, code, password')
-        .eq('code', savedCode)
-        .single()
+      const { data: families } = await supabase
+        .rpc('get_family_by_code', { p_code: savedCode })
 
+      const family = (families as FamilyRow[] | null)?.[0]
       if (!family) {
         localStorage.removeItem(FAMILY_CODE_KEY)
+        localStorage.removeItem(FAMILY_PASSWORD_KEY)
         set({ initialized: true })
         return
       }
 
-      // Check device is registered
+      // Check device is still registered
       const deviceId = get().deviceId
       const { data: device } = await supabase
         .from('devices')
@@ -73,69 +77,69 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
 
       if (!device) {
         localStorage.removeItem(FAMILY_CODE_KEY)
+        localStorage.removeItem(FAMILY_PASSWORD_KEY)
         set({ initialized: true })
         return
       }
 
+      const savedPassword = localStorage.getItem(FAMILY_PASSWORD_KEY)
+
       set({
         familyId: family.id,
         familyCode: family.code,
-        familyPassword: family.password,
+        familyPassword: savedPassword,
         initialized: true,
       })
     } catch {
       localStorage.removeItem(FAMILY_CODE_KEY)
+      localStorage.removeItem(FAMILY_PASSWORD_KEY)
       set({ initialized: true })
     }
   },
 
   checkFamilyExists: async (code: string) => {
     const { data } = await supabase
-      .from('families')
-      .select('id')
-      .eq('code', code.toUpperCase())
-      .single()
-
-    return !!data
+      .rpc('get_family_by_code', { p_code: code.toUpperCase() })
+    return !!(data as FamilyRow[] | null)?.[0]
   },
 
   joinOrCreate: async (code: string, password?: string) => {
     const upperCode = code.toUpperCase()
 
-    // Try to find existing family
-    const { data: existing } = await supabase
-      .from('families')
-      .select('id, code, password')
-      .eq('code', upperCode)
-      .single()
-
     let familyId: string
     let familyPassword: string
 
-    if (existing) {
-      // Existing family — verify password
-      if (existing.password !== password) {
+    // Check if family already exists
+    const { data: existingFamilies } = await supabase
+      .rpc('get_family_by_code', { p_code: upperCode })
+
+    if ((existingFamilies as FamilyRow[] | null)?.[0]) {
+      // Existing family — verify password via server-side bcrypt check
+      const { data: verified } = await supabase
+        .rpc('verify_family', { p_code: upperCode, p_password: password ?? '' })
+
+      if (!(verified as FamilyRow[] | null)?.[0]) {
         throw new Error('비밀번호가 일치하지 않습니다.')
       }
-      familyId = existing.id
-      familyPassword = existing.password
+
+      const verifiedFamily = (verified as FamilyRow[])[0]
+      familyId = verifiedFamily.id
+      familyPassword = password ?? ''
     } else {
-      // Create new family with random password
+      // Create new family with a random password
       const newPassword = generatePassword()
       const { data: created, error } = await supabase
-        .from('families')
-        .insert({ code: upperCode, password: newPassword })
-        .select('id, code, password')
-        .single()
+        .rpc('create_family', { p_code: upperCode, p_password: newPassword })
 
-      if (error || !created) {
+      if (error || !(created as FamilyRow[] | null)?.[0]) {
         throw new Error('가족방 생성에 실패했습니다.')
       }
-      familyId = created.id
-      familyPassword = created.password
+
+      familyId = (created as FamilyRow[])[0].id
+      familyPassword = newPassword
     }
 
-    // Upsert device into this family
+    // Register this device in the family
     const deviceId = get().deviceId
     const { error: deviceError } = await supabase
       .from('devices')
@@ -149,6 +153,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     }
 
     localStorage.setItem(FAMILY_CODE_KEY, upperCode)
+    localStorage.setItem(FAMILY_PASSWORD_KEY, familyPassword)
     set({ familyId, familyCode: upperCode, familyPassword })
   },
 
@@ -159,14 +164,13 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     if (!familyId) return
 
     const { error } = await supabase
-      .from('families')
-      .update({ password })
-      .eq('id', familyId)
+      .rpc('update_family_password', { p_family_id: familyId, p_new_password: password })
 
     if (error) {
       throw new Error('비밀번호 변경에 실패했습니다.')
     }
 
+    localStorage.setItem(FAMILY_PASSWORD_KEY, password)
     set({ familyPassword: password })
   },
 
@@ -192,36 +196,34 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     }
 
     localStorage.removeItem(FAMILY_CODE_KEY)
+    localStorage.removeItem(FAMILY_PASSWORD_KEY)
     set({ familyId: null, familyCode: null, familyPassword: null })
   },
 
   deleteFamily: async (password: string) => {
     if (useDemoStore.getState().isDemo) return
 
-    const { familyId, familyCode, familyPassword, deviceId } = get()
+    const { familyId, familyCode } = get()
 
-    if (password !== familyPassword) {
-      throw new Error('비밀번호가 일치하지 않습니다.')
+    if (familyId) {
+      const { data: deleted, error } = await supabase
+        .rpc('delete_family_secure', { p_family_id: familyId, p_password: password })
+
+      if (error) {
+        throw new Error('가족방 삭제에 실패했습니다.')
+      }
+
+      if (!deleted) {
+        throw new Error('비밀번호가 일치하지 않습니다.')
+      }
     }
 
     if (familyCode) {
       useDefaultsStore.getState().clearDefaults(familyCode)
     }
 
-    if (familyId) {
-      await supabase
-        .from('devices')
-        .delete()
-        .eq('device_id', deviceId)
-        .eq('family_id', familyId)
-
-      await supabase
-        .from('families')
-        .delete()
-        .eq('id', familyId)
-    }
-
     localStorage.removeItem(FAMILY_CODE_KEY)
+    localStorage.removeItem(FAMILY_PASSWORD_KEY)
     set({ familyId: null, familyCode: null, familyPassword: null })
   },
 }))
