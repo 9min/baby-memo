@@ -67,6 +67,7 @@ vi.mock('@/lib/supabase', () => {
   return {
     supabase: {
       from: vi.fn(() => ({ ...mockQueryBuilder })),
+      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
       channel: vi.fn(() => mockChannel),
       removeChannel: vi.fn(),
     },

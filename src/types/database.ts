@@ -1,7 +1,6 @@
 export interface Family {
   id: string
   code: string
-  password: string
   created_at: string
   updated_at: string
 }
