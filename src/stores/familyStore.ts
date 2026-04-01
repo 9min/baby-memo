@@ -205,10 +205,6 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
 
     const { familyId, familyCode } = get()
 
-    if (familyCode) {
-      useDefaultsStore.getState().clearDefaults(familyCode)
-    }
-
     if (familyId) {
       const { data: deleted, error } = await supabase
         .rpc('delete_family_secure', { p_family_id: familyId, p_password: password })
@@ -220,6 +216,10 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       if (!deleted) {
         throw new Error('비밀번호가 일치하지 않습니다.')
       }
+    }
+
+    if (familyCode) {
+      useDefaultsStore.getState().clearDefaults(familyCode)
     }
 
     localStorage.removeItem(FAMILY_CODE_KEY)
